@@ -1,3 +1,4 @@
+import { expect, test } from "vitest";
 import { formatNumber, formatPercent } from "../utils/format";
 
 test("formatNumber adds commas", () => {
