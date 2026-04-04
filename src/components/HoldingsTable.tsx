@@ -1,11 +1,11 @@
 import { useMemo } from "react";
 import {
-  ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
   getSortedRowModel,
 } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import type { Holding } from "../data/types";
 import { formatNumber, formatPercent } from "../utils/format";
 import { HoldingDelta } from "./HoldingDelta";
