@@ -11,3 +11,11 @@ test("emits search changes", () => {
   fireEvent.change(screen.getByPlaceholderText("Search by name or ticker"), { target: { value: "AAPL" } });
   expect(onSearch).toHaveBeenCalledWith("AAPL");
 });
+
+test("emits sort changes", () => {
+  const onSearch = vi.fn();
+  const onSort = vi.fn();
+  render(<FiltersBar onSearch={onSearch} onSort={onSort} />);
+  fireEvent.change(screen.getByRole("combobox"), { target: { value: "shares" } });
+  expect(onSort).toHaveBeenCalledWith("shares");
+});
