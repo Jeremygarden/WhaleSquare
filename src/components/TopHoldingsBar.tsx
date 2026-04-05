@@ -54,7 +54,13 @@ export function TopHoldingsBar({ holdings }: { holdings: Holding[] }) {
         <div className="chart-subtitle">Value with delta share overlay</div>
       </div>
       <div style={{ position: "relative" }}>
-        <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} width="100%" height={chartHeight}>
+        <svg
+          viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+          width="100%"
+          height={chartHeight}
+          role="img"
+          aria-label="Top holdings bar chart"
+        >
           {data.map((item, index) => {
             const y = 5 + index * (barHeight + barGap);
             const valueWidth =

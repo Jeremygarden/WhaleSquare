@@ -87,6 +87,8 @@ export function ValueTrend({ data }: { data: TrendPoint[] }) {
           viewBox={`0 0 ${chart.width} ${chart.height}`}
           width="100%"
           height={chart.height}
+          role="img"
+          aria-label="Portfolio value trend chart"
         >
           {[0, 0.5, 1].map((tick) => {
             const y = chart.padding + tick * (chart.height - chart.padding * 2);
@@ -117,6 +119,12 @@ export function ValueTrend({ data }: { data: TrendPoint[] }) {
                 fill="var(--color-accent)"
                 stroke="var(--color-surface)"
                 strokeWidth={2}
+              />
+              <circle
+                cx={point.x}
+                cy={point.y}
+                r={10}
+                fill="transparent"
                 onMouseMove={(event) =>
                   handleHover(event, point.quarter, point.value)
                 }

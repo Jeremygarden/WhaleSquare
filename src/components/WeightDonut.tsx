@@ -50,9 +50,9 @@ export function WeightDonut({ holdings }: { holdings: Holding[] }) {
   }, [holdings]);
 
   const total = slices.reduce((sum, slice) => sum + slice.weight, 0) || 1;
-  const size = 160;
+  const size = 200;
   const strokeWidth = 18;
-  const radius = 60;
+  const radius = 70;
   const center = size / 2;
   const circumference = 2 * Math.PI * radius;
 
@@ -81,8 +81,14 @@ export function WeightDonut({ holdings }: { holdings: Holding[] }) {
         <div className="chart-subtitle">Top positions by weight</div>
       </div>
       <div className="donut-layout">
-        <div style={{ position: "relative" }}>
-          <svg viewBox={`0 0 ${size} ${size}`} width="100%" height="220">
+        <div style={{ position: "relative", maxWidth: "300px", width: "100%" }}>
+          <svg
+            viewBox="0 0 200 200"
+            width="100%"
+            height="220"
+            role="img"
+            aria-label="Portfolio weight donut chart"
+          >
             <circle
               cx={center}
               cy={center}

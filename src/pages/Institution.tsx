@@ -40,6 +40,7 @@ export default function Institution() {
   const [institution, setInstitution] = useState<InstitutionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const holdings = institution?.holdings ?? [];
 
   useEffect(() => {
     if (!cik) return;
@@ -67,9 +68,9 @@ export default function Institution() {
 
   const metrics = useMemo(() => {
     if (!institution) return null;
-    const holdingsCount = institution.holdings.length;
-    const topHolding = [...institution.holdings].sort((a, b) => b.value - a.value)[0];
-    const newPositions = institution.holdings.filter(
+    const holdingsCount = holdings.length;
+    const topHolding = [...holdings].sort((a, b) => b.value - a.value)[0];
+    const newPositions = holdings.filter(
       (holding) => holding.changeShares === holding.shares
     ).length;
     return {
@@ -78,25 +79,25 @@ export default function Institution() {
       topHolding,
       newPositions,
     };
-  }, [institution]);
+  }, [holdings, institution]);
 
   const holdingsByChange = useMemo(() => {
-    if (!institution) return [];
-    return [...institution.holdings]
+    if (!holdings.length) return [];
+    return [...holdings]
       .sort((a, b) => Math.abs(b.changeShares) - Math.abs(a.changeShares))
       .slice(0, 10);
-  }, [institution]);
+  }, [holdings]);
 
   const topHoldings = useMemo(() => {
-    if (!institution) return [];
-    return [...institution.holdings]
+    if (!holdings.length) return [];
+    return [...holdings]
       .sort((a, b) => b.value - a.value)
       .slice(0, 5);
-  }, [institution]);
+  }, [holdings]);
 
   if (loading && !institution) {
     return (
-      <div className="dashboard">
+      <div className="dashboard dashboard-narrow">
         <div className="metrics">
           {Array.from({ length: 4 }).map((_, index) => (
             <div key={index} className="card metric-card">
@@ -132,9 +133,13 @@ export default function Institution() {
     );
   }
 
+  if (!institution.holdings) {
+    return <div>No holdings data</div>;
+  }
+
   return (
     <motion.div
-      className="dashboard"
+      className="dashboard dashboard-narrow"
       variants={pageVariants}
       initial="initial"
       animate="animate"

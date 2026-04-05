@@ -9,7 +9,10 @@ export function HoldingDelta({ value }: { value: number }) {
   );
 
   useEffect(() => {
-    const controls = animate(animatedValue, magnitude, { duration: 0.35 });
+    const controls = animate(animatedValue, magnitude, {
+      duration: 0.4,
+      ease: "easeOut",
+    });
     return () => controls.stop();
   }, [animatedValue, magnitude]);
 

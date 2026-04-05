@@ -25,10 +25,11 @@ export default function Filing() {
   const { institution } = useHoldingsStore();
   const { accession } = useParams();
   const [activeTab, setActiveTab] = useState<TabKey>("all");
+  const holdings = institution?.holdings ?? [];
 
   const categorizedHoldings = useMemo<CategorizedHolding[]>(() => {
-    if (!institution) return [];
-    return institution.holdings.map((holding) => {
+    if (!holdings.length) return [];
+    return holdings.map((holding) => {
       if (holding.changeShares > 0 && holding.changeShares === holding.shares) {
         return { ...holding, category: "new" };
       }
@@ -40,7 +41,7 @@ export default function Filing() {
       }
       return { ...holding, category: "decreased" };
     });
-  }, [institution]);
+  }, [holdings]);
 
   const tabCounts = useMemo(() => {
     const counts = {
@@ -70,12 +71,16 @@ export default function Filing() {
     );
   }
 
+  if (!institution.holdings) {
+    return <div>No holdings data</div>;
+  }
+
   const totalValue = `$${formatNumber(institution.totalValue)}`;
   const filingQuarter = institution.quarter || "Latest";
   const accessionValue = accession ?? "0001067983-24-000020";
 
   return (
-    <div className="dashboard">
+    <div className="dashboard dashboard-narrow">
       <div className="card p-6" style={{ display: "grid", gap: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <Link className="nav-link" to="/" style={{ padding: 0 }}>
@@ -91,44 +96,49 @@ export default function Filing() {
         </div>
       </div>
 
-      <div className="card p-4" style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-        {TAB_ORDER.map((tab) => {
-          const isActive = tab === activeTab;
-          return (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setActiveTab(tab)}
-              style={{
-                borderRadius: 999,
-                border: "1px solid var(--color-border)",
-                background: isActive ? "rgba(59,130,246,0.18)" : "transparent",
-                color: isActive ? "var(--color-text)" : "var(--color-text-muted)",
-                padding: "8px 14px",
-                fontSize: 13,
-                fontWeight: 600,
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                cursor: "pointer",
-                transition: "all 0.2s ease",
-              }}
-            >
-              {TAB_LABELS[tab]}
-              <span
+      <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+        <div className="card p-4" style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          {TAB_ORDER.map((tab) => {
+            const isActive = tab === activeTab;
+            return (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
                 style={{
-                  background: isActive ? "rgba(59,130,246,0.25)" : "rgba(59,130,246,0.12)",
-                  padding: "2px 8px",
                   borderRadius: 999,
-                  fontSize: 12,
-                  color: "var(--color-text)",
+                  border: "1px solid var(--color-border)",
+                  background: isActive ? "rgba(59,130,246,0.18)" : "transparent",
+                  color: isActive ? "var(--color-text)" : "var(--color-text-muted)",
+                  padding: "8px 14px",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  whiteSpace: "nowrap",
                 }}
               >
-                {tabCounts[tab]}
-              </span>
-            </button>
-          );
-        })}
+                {TAB_LABELS[tab]}
+                <span
+                  style={{
+                    background: isActive
+                      ? "rgba(59,130,246,0.25)"
+                      : "rgba(59,130,246,0.12)",
+                    padding: "2px 8px",
+                    borderRadius: 999,
+                    fontSize: 12,
+                    color: "var(--color-text)",
+                  }}
+                >
+                  {tabCounts[tab]}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="card table-card">

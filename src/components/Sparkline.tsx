@@ -26,7 +26,7 @@ export function Sparkline({ data }: { data: number[] }) {
       height={DEFAULT_HEIGHT}
       viewBox={`0 0 ${DEFAULT_WIDTH} ${DEFAULT_HEIGHT}`}
       role="img"
-      aria-label="Holding value trend"
+      aria-label="Holdings sparkline"
     >
       <path
         d={buildPath(points)}
