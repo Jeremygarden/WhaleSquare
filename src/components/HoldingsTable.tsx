@@ -1,26 +1,35 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   flexRender,
   getCoreRowModel,
   useReactTable,
   getSortedRowModel,
 } from "@tanstack/react-table";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import type { Holding } from "../data/types";
 import { formatNumber, formatPercent } from "../utils/format";
 import { HoldingDelta } from "./HoldingDelta";
 
 export function HoldingsTable({ holdings }: { holdings: Holding[] }) {
+  const [sorting, setSorting] = useState<SortingState>([]);
+
   const columns = useMemo<ColumnDef<Holding>[]>(() => [
-    { header: "Company", accessorKey: "name" },
-    { header: "Ticker", accessorKey: "ticker" },
-    { header: "Shares", accessorKey: "shares", cell: info => formatNumber(info.getValue<number>()) },
-    { header: "Value", accessorKey: "value", cell: info => `$${formatNumber(info.getValue<number>())}` },
-    { header: "Weight", accessorKey: "weight", cell: info => formatPercent(info.getValue<number>()) },
-    { header: "Δ Shares", accessorKey: "changeShares", cell: info => <HoldingDelta value={info.getValue<number>()} /> },
+    { header: "Company", accessorKey: "name", enableSorting: true },
+    { header: "Ticker", accessorKey: "ticker", enableSorting: true },
+    { header: "Shares", accessorKey: "shares", enableSorting: true, cell: info => formatNumber(info.getValue<number>()) },
+    { header: "Value", accessorKey: "value", enableSorting: true, cell: info => `$${formatNumber(info.getValue<number>())}` },
+    { header: "Weight", accessorKey: "weight", enableSorting: true, cell: info => formatPercent(info.getValue<number>()) },
+    { header: "Δ Shares", accessorKey: "changeShares", enableSorting: true, cell: info => <HoldingDelta value={info.getValue<number>()} /> },
   ], []);
 
-  const table = useReactTable({ data: holdings, columns, getCoreRowModel: getCoreRowModel(), getSortedRowModel: getSortedRowModel() });
+  const table = useReactTable({
+    data: holdings,
+    columns,
+    state: { sorting },
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
 
   return (
     <div className="card p-4">
@@ -28,11 +37,20 @@ export function HoldingsTable({ holdings }: { holdings: Holding[] }) {
         <thead>
           {table.getHeaderGroups().map(hg => (
             <tr key={hg.id}>
-              {hg.headers.map(header => (
-                <th key={header.id} style={{ textAlign: "left", padding: "10px 8px" }}>
-                  {flexRender(header.column.columnDef.header, header.getContext())}
-                </th>
-              ))}
+              {hg.headers.map(header => {
+                const sorted = header.column.getIsSorted();
+                const sortIndicator = sorted === "asc" ? "▲" : sorted === "desc" ? "▼" : "";
+                return (
+                  <th
+                    key={header.id}
+                    style={{ textAlign: "left", padding: "10px 8px", cursor: header.column.getCanSort() ? "pointer" : "default" }}
+                    onClick={header.column.getCanSort() ? () => header.column.toggleSorting() : undefined}
+                  >
+                    {flexRender(header.column.columnDef.header, header.getContext())}
+                    {sortIndicator && <span style={{ marginLeft: 6 }}>{sortIndicator}</span>}
+                  </th>
+                );
+              })}
             </tr>
           ))}
         </thead>
