@@ -85,15 +85,17 @@ export default function Dashboard() {
     ? institution.filingHistory
     : [institution.quarter];
 
-  const filtered = institution.holdings
-    .filter(
-      (h) =>
-        h.name.toLowerCase().includes(query.toLowerCase()) ||
-        h.ticker.toLowerCase().includes(query.toLowerCase())
-    )
-    .sort((a, b) =>
-      sortBy === "value" ? b.value - a.value : b.shares - a.shares
-    );
+  const filtered = useMemo(() => {
+    return institution.holdings
+      .filter(
+        (h) =>
+          h.name.toLowerCase().includes(query.toLowerCase()) ||
+          h.ticker.toLowerCase().includes(query.toLowerCase())
+      )
+      .sort((a, b) =>
+        sortBy === "value" ? b.value - a.value : b.shares - a.shares
+      );
+  }, [institution.holdings, query, sortBy]);
 
   return (
     <div className="dashboard">
