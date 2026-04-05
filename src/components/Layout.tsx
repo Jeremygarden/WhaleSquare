@@ -1,13 +1,27 @@
+import { useHoldingsStore } from "../store/useHoldingsStore";
+
 export function Layout({ children }: { children: React.ReactNode }) {
+  const { institution } = useHoldingsStore();
+
   return (
-    <main>
-      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
-        <h1 style={{ fontSize: 26 }}>WhalewisdomClone</h1>
-        <nav style={{ display: "flex", gap: 16, fontSize: 14, opacity: 0.7 }}>
-          <a href="/">Dashboard</a>
+    <div className="app-shell">
+      <header className="app-header">
+        <div className="brand">
+          <div className="brand-title">
+            {institution?.name ?? "WhaleSquare Capital"}
+          </div>
+          <span className="quarter-badge">{institution?.quarter ?? "Q4 2024"}</span>
+        </div>
+        <nav className="nav-links">
+          <a className="nav-link" href="/">Dashboard</a>
+          <a className="nav-link" href="/institutions">Institutions</a>
+          <a className="nav-link" href="/filings">Filings</a>
         </nav>
+        <button className="nav-toggle" type="button" aria-label="Open navigation">
+          ☰
+        </button>
       </header>
-      {children}
-    </main>
+      <main className="app-main">{children}</main>
+    </div>
   );
 }
