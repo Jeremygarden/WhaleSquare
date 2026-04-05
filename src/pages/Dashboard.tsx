@@ -16,28 +16,6 @@ const INSTITUTIONS = [
   { name: "Third Point", cik: "0001040273" },
 ];
 
-const generateQuarters = (current: string, count: number) => {
-  const match = /^(\d{4})\s*Q([1-4])$/.exec(current.trim());
-  if (!match) {
-    return Array.from({ length: count }, (_, index) => `Q${index + 1}`);
-  }
-
-  let year = Number(match[1]);
-  let quarter = Number(match[2]);
-  const result: string[] = [];
-
-  for (let i = 0; i < count; i += 1) {
-    result.unshift(`${year} Q${quarter}`);
-    quarter -= 1;
-    if (quarter === 0) {
-      quarter = 4;
-      year -= 1;
-    }
-  }
-
-  return result;
-};
-
 export default function Dashboard() {
   const {
     institution,
@@ -47,6 +25,7 @@ export default function Dashboard() {
     selectedQuarter,
     setSelectedCik,
     setSelectedQuarter,
+    filingsByQuarter,
   } = useHoldingsStore();
   const [query, setQuery] = useState("");
   const [sortBy, setSortBy] = useState<"value" | "shares">("value");
@@ -64,7 +43,7 @@ export default function Dashboard() {
     return () => {
       active = false;
     };
-  }, [loadMock, setSelectedCik]);
+  }, [loadMock, selectedCik, setSelectedCik]);
 
   const metrics = useMemo(() => {
     if (!institution) return null;
@@ -133,15 +112,15 @@ export default function Dashboard() {
   }, [institution.holdings, query, sortBy]);
 
   const trendData = useMemo(() => {
-    const currentQuarter = selectedQuarter || institution.quarter;
-    const quarters = generateQuarters(currentQuarter, 6);
-    const base = institution.totalValue || 1;
-    const multipliers = [0.64, 0.72, 0.8, 0.88, 0.95, 1];
-    return quarters.map((quarter, index) => ({
-      quarter,
-      value: Math.round(base * multipliers[index]),
-    }));
-  }, [institution.quarter, institution.totalValue, selectedQuarter]);
+    const entries = Object.entries(filingsByQuarter);
+    if (entries.length) {
+      return entries
+        .map(([quarter, filing]) => ({ quarter, value: filing.totalValue }))
+        .sort((a, b) => a.quarter.localeCompare(b.quarter));
+    }
+    const fallbackQuarter = selectedQuarter || institution.quarter;
+    return [{ quarter: fallbackQuarter, value: institution.totalValue }];
+  }, [filingsByQuarter, institution.quarter, institution.totalValue, selectedQuarter]);
 
   return (
     <div className="dashboard">
