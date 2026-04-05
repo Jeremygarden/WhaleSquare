@@ -5,7 +5,15 @@ import { FiltersBar } from "../components/FiltersBar";
 import { formatNumber } from "../utils/format";
 
 export default function Dashboard() {
-  const { institution, loadMock, loadReal, loading } = useHoldingsStore();
+  const {
+    institution,
+    loadMock,
+    loadReal,
+    loading,
+    selectedCik,
+    selectedQuarter,
+    setSelectedQuarter,
+  } = useHoldingsStore();
   const [query, setQuery] = useState("");
   const [sortBy, setSortBy] = useState<"value" | "shares">("value");
   const [error, setError] = useState<string | null>(null);
@@ -13,7 +21,7 @@ export default function Dashboard() {
   useEffect(() => {
     let active = true;
     setError(null);
-    loadReal("0001067983").catch(() => {
+    loadReal(selectedCik).catch(() => {
       if (!active) return;
       setError("Live data unavailable — showing mock holdings.");
       loadMock();
@@ -21,7 +29,7 @@ export default function Dashboard() {
     return () => {
       active = false;
     };
-  }, [loadMock, loadReal]);
+  }, [loadMock, loadReal, selectedCik]);
 
   const metrics = useMemo(() => {
     if (!institution) return null;
@@ -31,9 +39,9 @@ export default function Dashboard() {
       totalValue: `$${formatNumber(institution.totalValue)}`,
       holdingsCount,
       topHolding,
-      quarter: institution.quarter,
+      quarter: selectedQuarter || institution.quarter,
     };
-  }, [institution]);
+  }, [institution, selectedQuarter]);
 
   if (loading && !institution) {
     return (
@@ -72,6 +80,10 @@ export default function Dashboard() {
       </div>
     );
   }
+
+  const availableQuarters = institution.filingHistory?.length
+    ? institution.filingHistory
+    : [institution.quarter];
 
   const filtered = institution.holdings
     .filter(
@@ -119,6 +131,22 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+      <div className="card" style={{ display: "flex", gap: 12, alignItems: "center", padding: "12px 16px" }}>
+        <label htmlFor="quarter-select" style={{ fontWeight: 600 }}>
+          Quarter
+        </label>
+        <select
+          id="quarter-select"
+          value={selectedQuarter || availableQuarters[0]}
+          onChange={(event) => setSelectedQuarter(event.target.value)}
+        >
+          {availableQuarters.map((quarter) => (
+            <option key={quarter} value={quarter}>
+              {quarter}
+            </option>
+          ))}
+        </select>
+      </div>
       <FiltersBar onSearch={setQuery} onSort={setSortBy} />
       {filtered.length === 0 ? (
         <div className="card table-empty">

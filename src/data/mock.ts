@@ -4,6 +4,7 @@ export const mockInstitution: Institution = {
   cik: "0001067983",
   name: "Sample Capital Management",
   quarter: "2025 Q4",
+  filingHistory: ["2025 Q4", "2025 Q3", "2025 Q2", "2025 Q1"],
   totalValue: 1245600000,
   holdings: [
     { cusip: "037833100", name: "Apple Inc.", ticker: "AAPL", shares: 1200000, value: 225000000, weight: 0.18, changeShares: 200000 },

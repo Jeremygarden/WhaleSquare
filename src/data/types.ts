@@ -14,4 +14,5 @@ export type Institution = {
   quarter: string;
   totalValue: number;
   holdings: Holding[];
+  filingHistory?: string[];
 };

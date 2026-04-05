@@ -6,6 +6,13 @@ const UA = "WhalewisdomClone contact@example.com";
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const cache = new Map<string, { expiresAt: number; data: Institution }>();
 
+function formatQuarter(dateString: string): string {
+  const [year, month] = dateString.split("-").map(Number);
+  if (!year || !month) return "Latest";
+  const quarter = Math.floor((month - 1) / 3) + 1;
+  return `${year} Q${quarter}`;
+}
+
 type InfoTableEntry = {
   nameOfIssuer: string;
   cusip: string;
@@ -61,6 +68,15 @@ export async function fetch13F(cik: string = "0001067983"): Promise<Institution>
   if (idx === -1) {
     throw new Error("No 13F-HR filing found for this CIK");
   }
+  const filingHistory = filings.form
+    .map((form: string, index: number) => {
+      if (form !== "13F-HR") return null;
+      const reportDate = filings.reportDate?.[index] ?? filings.filingDate?.[index];
+      return reportDate ? formatQuarter(reportDate) : null;
+    })
+    .filter(Boolean) as string[];
+  const uniqueHistory = Array.from(new Set(filingHistory));
+
   const accession = filings.accessionNumber[idx].replace(/-/g, "");
   const primaryDoc = filings.primaryDocument[idx];
   const filingUrl = `${SEC}/Archives/edgar/data/${parseInt(cik, 10)}/${accession}/${primaryDoc}`;
@@ -89,9 +105,10 @@ export async function fetch13F(cik: string = "0001067983"): Promise<Institution>
   const institution: Institution = {
     cik: normalizedCik,
     name,
-    quarter: "Latest",
+    quarter: uniqueHistory[0] ?? "Latest",
     totalValue,
     holdings,
+    filingHistory: uniqueHistory,
   };
 
   cache.set(normalizedCik, { expiresAt: Date.now() + CACHE_TTL_MS, data: institution });

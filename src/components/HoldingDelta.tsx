@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 
 export function HoldingDelta({ value }: { value: number }) {
-  const color = value >= 0 ? "#2f8f5b" : "#b04b3b";
+  const color = value >= 0 ? "var(--color-green)" : "var(--color-red)";
   const sign = value >= 0 ? "+" : "";
   return (
     <motion.span

@@ -13,14 +13,37 @@ import { HoldingDelta } from "./HoldingDelta";
 export function HoldingsTable({ holdings }: { holdings: Holding[] }) {
   const [sorting, setSorting] = useState<SortingState>([]);
 
-  const columns = useMemo<ColumnDef<Holding>[]>(() => [
-    { header: "Company", accessorKey: "name", enableSorting: true },
-    { header: "Ticker", accessorKey: "ticker", enableSorting: true },
-    { header: "Shares", accessorKey: "shares", enableSorting: true, cell: info => formatNumber(info.getValue<number>()) },
-    { header: "Value", accessorKey: "value", enableSorting: true, cell: info => `$${formatNumber(info.getValue<number>())}` },
-    { header: "Weight", accessorKey: "weight", enableSorting: true, cell: info => formatPercent(info.getValue<number>()) },
-    { header: "Δ Shares", accessorKey: "changeShares", enableSorting: true, cell: info => <HoldingDelta value={info.getValue<number>()} /> },
-  ], []);
+  const columns = useMemo<ColumnDef<Holding>[]>(
+    () => [
+      { header: "Company", accessorKey: "name", enableSorting: true },
+      { header: "Ticker", accessorKey: "ticker", enableSorting: true },
+      {
+        header: "Shares",
+        accessorKey: "shares",
+        enableSorting: true,
+        cell: (info) => formatNumber(info.getValue<number>()),
+      },
+      {
+        header: "Value",
+        accessorKey: "value",
+        enableSorting: true,
+        cell: (info) => `$${formatNumber(info.getValue<number>())}`,
+      },
+      {
+        header: "Weight",
+        accessorKey: "weight",
+        enableSorting: true,
+        cell: (info) => formatPercent(info.getValue<number>()),
+      },
+      {
+        header: "Δ Shares",
+        accessorKey: "changeShares",
+        enableSorting: true,
+        cell: (info) => <HoldingDelta value={info.getValue<number>()} />,
+      },
+    ],
+    []
+  );
 
   const table = useReactTable({
     data: holdings,
@@ -31,41 +54,64 @@ export function HoldingsTable({ holdings }: { holdings: Holding[] }) {
     getSortedRowModel: getSortedRowModel(),
   });
 
+  const numericColumns = new Set(["shares", "value", "weight", "changeShares"]);
+
   return (
-    <div className="card p-4">
-      <table width="100%">
-        <thead>
-          {table.getHeaderGroups().map(hg => (
-            <tr key={hg.id}>
-              {hg.headers.map(header => {
-                const sorted = header.column.getIsSorted();
-                const sortIndicator = sorted === "asc" ? "▲" : sorted === "desc" ? "▼" : "";
-                return (
-                  <th
-                    key={header.id}
-                    style={{ textAlign: "left", padding: "10px 8px", cursor: header.column.getCanSort() ? "pointer" : "default" }}
-                    onClick={header.column.getCanSort() ? () => header.column.toggleSorting() : undefined}
-                  >
-                    {flexRender(header.column.columnDef.header, header.getContext())}
-                    {sortIndicator && <span style={{ marginLeft: 6 }}>{sortIndicator}</span>}
-                  </th>
-                );
-              })}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {table.getRowModel().rows.map(row => (
-            <tr key={row.id}>
-              {row.getVisibleCells().map(cell => (
-                <td key={cell.id} style={{ padding: "10px 8px", borderTop: "1px solid #efe6d8" }}>
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="card table-card">
+      <div className="table-wrapper">
+        <table className="holdings-table">
+          <thead>
+            {table.getHeaderGroups().map((hg) => (
+              <tr key={hg.id}>
+                {hg.headers.map((header) => {
+                  const sorted = header.column.getIsSorted();
+                  const sortIndicator =
+                    sorted === "asc" ? "▲" : sorted === "desc" ? "▼" : "";
+                  return (
+                    <th
+                      key={header.id}
+                      onClick={
+                        header.column.getCanSort()
+                          ? () => header.column.toggleSorting()
+                          : undefined
+                      }
+                      style={{
+                        cursor: header.column.getCanSort() ? "pointer" : "default",
+                      }}
+                    >
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                      {sortIndicator && (
+                        <span style={{ marginLeft: 6 }}>{sortIndicator}</span>
+                      )}
+                    </th>
+                  );
+                })}
+              </tr>
+            ))}
+          </thead>
+          <tbody>
+            {table.getRowModel().rows.map((row) => (
+              <tr key={row.id} className="holdings-row">
+                {row.getVisibleCells().map((cell) => {
+                  const columnId = cell.column.id;
+                  const isNumeric = numericColumns.has(columnId);
+                  return (
+                    <td
+                      key={cell.id}
+                      className={`${isNumeric ? "table-mono table-right" : ""}`}
+                    >
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
