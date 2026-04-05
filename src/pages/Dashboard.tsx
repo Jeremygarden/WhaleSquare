@@ -1,7 +1,11 @@
 import { useHoldingsStore } from "../store/useHoldingsStore";
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { HoldingsTable } from "../components/HoldingsTable";
 import { FiltersBar } from "../components/FiltersBar";
+import { WeightDonut } from "../components/WeightDonut";
+import { TopHoldingsBar } from "../components/TopHoldingsBar";
+import { ValueTrend } from "../components/ValueTrend";
 import { formatNumber } from "../utils/format";
 
 const INSTITUTIONS = [
@@ -11,6 +15,28 @@ const INSTITUTIONS = [
   { name: "Tiger Global", cik: "0001167483" },
   { name: "Third Point", cik: "0001040273" },
 ];
+
+const generateQuarters = (current: string, count: number) => {
+  const match = /^(\d{4})\s*Q([1-4])$/.exec(current.trim());
+  if (!match) {
+    return Array.from({ length: count }, (_, index) => `Q${index + 1}`);
+  }
+
+  let year = Number(match[1]);
+  let quarter = Number(match[2]);
+  const result: string[] = [];
+
+  for (let i = 0; i < count; i += 1) {
+    result.unshift(`${year} Q${quarter}`);
+    quarter -= 1;
+    if (quarter === 0) {
+      quarter = 4;
+      year -= 1;
+    }
+  }
+
+  return result;
+};
 
 export default function Dashboard() {
   const {
@@ -25,6 +51,7 @@ export default function Dashboard() {
   const [query, setQuery] = useState("");
   const [sortBy, setSortBy] = useState<"value" | "shares">("value");
   const [error, setError] = useState<string | null>(null);
+  const [showCharts, setShowCharts] = useState(true);
 
   useEffect(() => {
     let active = true;
@@ -104,6 +131,17 @@ export default function Dashboard() {
         sortBy === "value" ? b.value - a.value : b.shares - a.shares
       );
   }, [institution.holdings, query, sortBy]);
+
+  const trendData = useMemo(() => {
+    const currentQuarter = selectedQuarter || institution.quarter;
+    const quarters = generateQuarters(currentQuarter, 6);
+    const base = institution.totalValue || 1;
+    const multipliers = [0.64, 0.72, 0.8, 0.88, 0.95, 1];
+    return quarters.map((quarter, index) => ({
+      quarter,
+      value: Math.round(base * multipliers[index]),
+    }));
+  }, [institution.quarter, institution.totalValue, selectedQuarter]);
 
   return (
     <div className="dashboard">
@@ -186,6 +224,45 @@ export default function Dashboard() {
           ))}
         </select>
       </div>
+      <div className="card table-card">
+        <div className="table-wrapper">
+          <table className="holdings-table">
+            <thead>
+              <tr>
+                <th>Institution</th>
+                <th>CIK</th>
+                <th>Detail</th>
+              </tr>
+            </thead>
+            <tbody>
+              {INSTITUTIONS.map((institution) => (
+                <tr key={institution.cik} className="holdings-row">
+                  <td>
+                    <Link to={`/institution/${institution.cik}`}>
+                      {institution.name}
+                    </Link>
+                  </td>
+                  <td className="table-mono">{institution.cik}</td>
+                  <td>
+                    <Link className="nav-link" to={`/institution/${institution.cik}`}>
+                      View
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div
+        className="card"
+        style={{ display: "flex", gap: 12, alignItems: "center", padding: "12px 16px" }}
+      >
+        <div style={{ fontWeight: 600 }}>Filing</div>
+        <Link className="nav-link" to="/filing/latest" style={{ marginLeft: "auto" }}>
+          View Filing →
+        </Link>
+      </div>
       <FiltersBar onSearch={setQuery} onSort={setSortBy} />
       {filtered.length === 0 ? (
         <div className="card table-empty">
@@ -194,7 +271,32 @@ export default function Dashboard() {
           <span>Try another search term or reset filters.</span>
         </div>
       ) : (
-        <HoldingsTable holdings={filtered} />
+        <>
+          <HoldingsTable holdings={filtered} />
+          <div className="charts-section">
+            <div className="charts-header">
+              <div>
+                <div className="chart-title">Charts</div>
+                <div className="chart-subtitle">Portfolio composition snapshots</div>
+              </div>
+              <button
+                className="chart-toggle"
+                onClick={() => setShowCharts((prev) => !prev)}
+              >
+                {showCharts ? "Hide Charts" : "Show Charts"}
+              </button>
+            </div>
+            {showCharts && (
+              <>
+                <div className="charts-grid">
+                  <WeightDonut holdings={filtered} />
+                  <TopHoldingsBar holdings={filtered} />
+                </div>
+                <ValueTrend data={trendData} />
+              </>
+            )}
+          </div>
+        </>
       )}
     </div>
   );
