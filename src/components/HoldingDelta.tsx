@@ -1,7 +1,13 @@
 import { animate, motion, useMotionValue, useTransform } from "framer-motion";
 import { useEffect } from "react";
 
-export function HoldingDelta({ value }: { value: number }) {
+export function HoldingDelta({ value }: { value: number | null | undefined }) {
+  if (value == null || Number.isNaN(value)) {
+    return (
+      <span style={{ color: "var(--color-text-muted)", fontWeight: 600 }}>—</span>
+    );
+  }
+
   const magnitude = Math.abs(value);
   const animatedValue = useMotionValue(0);
   const formattedValue = useTransform(animatedValue, (latest) =>
