@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import type { Institution } from "../src/data/types";
+import type { FilingsByQuarter, Institution } from "../src/data/types";
 
 const SEC = "https://data.sec.gov";
 const UA = "WhalewisdomClone contact@example.com";
@@ -49,13 +49,39 @@ function parseInfoTables(xml: string): InfoTableEntry[] {
   return tables;
 }
 
-export async function fetch13F(cik: string = "0001067983"): Promise<Institution> {
-  const normalizedCik = cik.padStart(10, "0");
-  const cached = cache.get(normalizedCik);
-  if (cached && cached.expiresAt > Date.now()) {
-    return cached.data;
+async function fetchFilingXml(cik: string, accession: string, primaryDoc: string) {
+  const filingUrl = `${SEC}/Archives/edgar/data/${parseInt(cik, 10)}/${accession}/${primaryDoc}`;
+  const filingRes = await fetch(filingUrl, { headers: { "User-Agent": UA } });
+  if (!filingRes.ok) {
+    throw new Error(`SEC filing request failed: ${filingRes.status} ${filingRes.statusText}`);
   }
+  return filingRes.text();
+}
 
+function buildHoldings(
+  infoTables: InfoTableEntry[],
+  previousHoldings = new Map<string, number>()
+) {
+  const totalValue = infoTables.reduce((sum, item) => sum + item.value, 0);
+  const holdings = infoTables.map((item) => {
+    const holdingValue = item.value;
+    const weight = totalValue > 0 ? (holdingValue / totalValue) * 100 : 0;
+    const previousShares = previousHoldings.get(item.cusip) ?? 0;
+    return {
+      cusip: item.cusip,
+      name: item.nameOfIssuer,
+      ticker: "",
+      shares: item.sshPrnamt,
+      value: holdingValue,
+      weight,
+      changeShares: item.sshPrnamt - previousShares,
+    };
+  });
+  return { holdings, totalValue };
+}
+
+export async function fetchTwoQuarters(cik: string): Promise<Institution> {
+  const normalizedCik = cik.padStart(10, "0");
   const url = `${SEC}/submissions/CIK${normalizedCik}.json`;
   const res = await fetch(url, { headers: { "User-Agent": UA } });
   if (!res.ok) {
@@ -64,10 +90,14 @@ export async function fetch13F(cik: string = "0001067983"): Promise<Institution>
   const data = await res.json();
   const name = data.name;
   const filings = data.filings.recent;
-  const idx = filings.form.findIndex((f: string) => f === "13F-HR");
-  if (idx === -1) {
+  const indices: number[] = [];
+  filings.form.forEach((form: string, index: number) => {
+    if (form === "13F-HR") indices.push(index);
+  });
+  if (indices.length === 0) {
     throw new Error("No 13F-HR filing found for this CIK");
   }
+
   const filingHistory = filings.form
     .map((form: string, index: number) => {
       if (form !== "13F-HR") return null;
@@ -77,40 +107,72 @@ export async function fetch13F(cik: string = "0001067983"): Promise<Institution>
     .filter(Boolean) as string[];
   const uniqueHistory = Array.from(new Set(filingHistory));
 
-  const accession = filings.accessionNumber[idx].replace(/-/g, "");
-  const primaryDoc = filings.primaryDocument[idx];
-  const filingUrl = `${SEC}/Archives/edgar/data/${parseInt(cik, 10)}/${accession}/${primaryDoc}`;
-  const filingRes = await fetch(filingUrl, { headers: { "User-Agent": UA } });
-  if (!filingRes.ok) {
-    throw new Error(`SEC filing request failed: ${filingRes.status} ${filingRes.statusText}`);
+  const latestIdx = indices[0];
+  const previousIdx = indices[1];
+
+  const latestAccession = filings.accessionNumber[latestIdx].replace(/-/g, "");
+  const latestDoc = filings.primaryDocument[latestIdx];
+  const latestXml = await fetchFilingXml(normalizedCik, latestAccession, latestDoc);
+  const latestTables = parseInfoTables(latestXml);
+
+  let previousTables: InfoTableEntry[] = [];
+  if (previousIdx !== undefined) {
+    const previousAccession = filings.accessionNumber[previousIdx].replace(/-/g, "");
+    const previousDoc = filings.primaryDocument[previousIdx];
+    const previousXml = await fetchFilingXml(normalizedCik, previousAccession, previousDoc);
+    previousTables = parseInfoTables(previousXml);
   }
-  const xml = await filingRes.text();
-  const infoTables = parseInfoTables(xml);
 
-  const totalValue = infoTables.reduce((sum, item) => sum + item.value, 0);
-  const holdings = infoTables.map((item) => {
-    const holdingValue = item.value;
-    const weight = totalValue > 0 ? (holdingValue / totalValue) * 100 : 0;
-    return {
-      cusip: item.cusip,
-      name: item.nameOfIssuer,
-      ticker: "",
-      shares: item.sshPrnamt,
-      value: holdingValue,
-      weight,
-      changeShares: 0,
+  const previousHoldingsMap = new Map(
+    previousTables.map((item) => [item.cusip, item.sshPrnamt])
+  );
+  const latest = buildHoldings(latestTables, previousHoldingsMap);
+  const previous = buildHoldings(previousTables, new Map());
+
+  const latestQuarter =
+    uniqueHistory[0] ??
+    (filings.reportDate?.[latestIdx]
+      ? formatQuarter(filings.reportDate?.[latestIdx])
+      : "Latest");
+  const previousQuarter = previousIdx !== undefined
+    ? uniqueHistory[1] ??
+      (filings.reportDate?.[previousIdx]
+        ? formatQuarter(filings.reportDate?.[previousIdx])
+        : undefined)
+    : undefined;
+
+  const filingsByQuarter: FilingsByQuarter = {
+    [latestQuarter]: {
+      holdings: latest.holdings,
+      totalValue: latest.totalValue,
+    },
+  };
+  if (previousQuarter) {
+    filingsByQuarter[previousQuarter] = {
+      holdings: previous.holdings,
+      totalValue: previous.totalValue,
     };
-  });
+  }
 
-  const institution: Institution = {
+  return {
     cik: normalizedCik,
     name,
-    quarter: uniqueHistory[0] ?? "Latest",
-    totalValue,
-    holdings,
+    quarter: latestQuarter,
+    totalValue: latest.totalValue,
+    holdings: latest.holdings,
     filingHistory: uniqueHistory,
+    filingsByQuarter,
   };
+}
 
+export async function fetch13F(cik: string = "0001067983"): Promise<Institution> {
+  const normalizedCik = cik.padStart(10, "0");
+  const cached = cache.get(normalizedCik);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.data;
+  }
+
+  const institution = await fetchTwoQuarters(normalizedCik);
   cache.set(normalizedCik, { expiresAt: Date.now() + CACHE_TTL_MS, data: institution });
   return institution;
 }
