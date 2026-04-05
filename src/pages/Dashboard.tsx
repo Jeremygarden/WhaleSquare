@@ -4,14 +4,22 @@ import { HoldingsTable } from "../components/HoldingsTable";
 import { FiltersBar } from "../components/FiltersBar";
 import { formatNumber } from "../utils/format";
 
+const INSTITUTIONS = [
+  { name: "Berkshire Hathaway", cik: "0001067983" },
+  { name: "BlackRock", cik: "0001364742" },
+  { name: "Vanguard", cik: "0000102909" },
+  { name: "Tiger Global", cik: "0001167483" },
+  { name: "Third Point", cik: "0001040273" },
+];
+
 export default function Dashboard() {
   const {
     institution,
     loadMock,
-    loadReal,
     loading,
     selectedCik,
     selectedQuarter,
+    setSelectedCik,
     setSelectedQuarter,
   } = useHoldingsStore();
   const [query, setQuery] = useState("");
@@ -21,7 +29,7 @@ export default function Dashboard() {
   useEffect(() => {
     let active = true;
     setError(null);
-    loadReal(selectedCik).catch(() => {
+    setSelectedCik(selectedCik).catch(() => {
       if (!active) return;
       setError("Live data unavailable — showing mock holdings.");
       loadMock();
@@ -29,7 +37,7 @@ export default function Dashboard() {
     return () => {
       active = false;
     };
-  }, [loadMock, loadReal, selectedCik]);
+  }, [loadMock, setSelectedCik]);
 
   const metrics = useMemo(() => {
     if (!institution) return null;
@@ -133,7 +141,36 @@ export default function Dashboard() {
           </div>
         </div>
       )}
-      <div className="card" style={{ display: "flex", gap: 12, alignItems: "center", padding: "12px 16px" }}>
+      <div
+        className="card"
+        style={{ display: "flex", gap: 12, alignItems: "center", padding: "12px 16px" }}
+      >
+        <label htmlFor="institution-select" style={{ fontWeight: 600 }}>
+          Institution
+        </label>
+        <select
+          id="institution-select"
+          value={selectedCik}
+          onChange={(event) => {
+            const cik = event.target.value;
+            setError(null);
+            setSelectedCik(cik).catch(() => {
+              setError("Live data unavailable — showing mock holdings.");
+              loadMock();
+            });
+          }}
+        >
+          {INSTITUTIONS.map((institution) => (
+            <option key={institution.cik} value={institution.cik}>
+              {institution.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div
+        className="card"
+        style={{ display: "flex", gap: 12, alignItems: "center", padding: "12px 16px" }}
+      >
         <label htmlFor="quarter-select" style={{ fontWeight: 600 }}>
           Quarter
         </label>

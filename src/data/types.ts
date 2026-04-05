@@ -8,6 +8,14 @@ export type Holding = {
   changeShares: number; // delta vs previous filing
 };
 
+export type FilingsByQuarter = Record<
+  string,
+  {
+    holdings: Holding[];
+    totalValue: number;
+  }
+>;
+
 export type Institution = {
   cik: string;
   name: string;
@@ -15,4 +23,5 @@ export type Institution = {
   totalValue: number;
   holdings: Holding[];
   filingHistory?: string[];
+  filingsByQuarter?: FilingsByQuarter;
 };
