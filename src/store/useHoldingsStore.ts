@@ -52,7 +52,8 @@ export const useHoldingsStore = create<State>((set, get) => ({
   loadReal: async (cik: string) => {
     set({ loading: true, selectedCik: cik });
     try {
-      const institution = await fetchInstitution(cik);
+      const selectedQuarter = get().selectedQuarter || undefined;
+      const institution = await fetchInstitution(cik, selectedQuarter);
       const filingsByQuarter = buildFilingsMap(institution);
       const latestQuarter = institution.filingHistory?.[0] ?? institution.quarter;
       const active = filingsByQuarter[latestQuarter] ?? {

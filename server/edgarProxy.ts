@@ -6,6 +6,14 @@ const UA = "WhalewisdomClone contact@example.com";
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const cache = new Map<string, { expiresAt: number; data: Institution }>();
 
+function validateCik(cik: string): string {
+  const clean = cik.replace(/\D/g, "").padStart(10, "0");
+  if (!/^\d{10}$/.test(clean)) {
+    throw new Error(`Invalid CIK: ${cik}`);
+  }
+  return clean;
+}
+
 function formatQuarter(dateString: string): string {
   const [year, month] = dateString.split("-").map(Number);
   if (!year || !month) return "Latest";
@@ -24,7 +32,7 @@ type InfoTableEntry = {
 };
 
 function getTagValue(block: string, tag: string): string {
-  const regex = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i");
+  const regex = new RegExp(`<${tag}[^>]*>([\s\S]*?)<\/${tag}>`, "i");
   const match = block.match(regex);
   return match ? match[1].trim() : "";
 }
@@ -80,8 +88,8 @@ function buildHoldings(
   return { holdings, totalValue };
 }
 
-export async function fetchTwoQuarters(cik: string): Promise<Institution> {
-  const normalizedCik = cik.padStart(10, "0");
+export async function fetchTwoQuarters(cik: string, quarter?: string): Promise<Institution> {
+  const normalizedCik = validateCik(cik);
   const url = `${SEC}/submissions/CIK${normalizedCik}.json`;
   const res = await fetch(url, { headers: { "User-Agent": UA } });
   if (!res.ok) {
@@ -98,17 +106,27 @@ export async function fetchTwoQuarters(cik: string): Promise<Institution> {
     throw new Error("No 13F-HR filing found for this CIK");
   }
 
-  const filingHistory = filings.form
-    .map((form: string, index: number) => {
-      if (form !== "13F-HR") return null;
-      const reportDate = filings.reportDate?.[index] ?? filings.filingDate?.[index];
-      return reportDate ? formatQuarter(reportDate) : null;
-    })
-    .filter(Boolean) as string[];
+  const filingEntries = indices.map((index) => {
+    const reportDate = filings.reportDate?.[index] ?? filings.filingDate?.[index];
+    return {
+      index,
+      quarter: reportDate ? formatQuarter(reportDate) : "Latest",
+    };
+  });
+  const filingHistory = filingEntries.map((entry) => entry.quarter);
   const uniqueHistory = Array.from(new Set(filingHistory));
 
-  const latestIdx = indices[0];
-  const previousIdx = indices[1];
+  const targetIndex = quarter
+    ? filingEntries.findIndex((entry) => entry.quarter === quarter)
+    : 0;
+  if (targetIndex === -1) {
+    throw new Error(`Quarter ${quarter} not found for this CIK`);
+  }
+
+  const latestEntry = filingEntries[targetIndex];
+  const previousEntry = filingEntries[targetIndex + 1];
+  const latestIdx = latestEntry.index;
+  const previousIdx = previousEntry?.index;
 
   const latestAccession = filings.accessionNumber[latestIdx].replace(/-/g, "");
   const latestDoc = filings.primaryDocument[latestIdx];
@@ -129,17 +147,8 @@ export async function fetchTwoQuarters(cik: string): Promise<Institution> {
   const latest = buildHoldings(latestTables, previousHoldingsMap);
   const previous = buildHoldings(previousTables, new Map());
 
-  const latestQuarter =
-    uniqueHistory[0] ??
-    (filings.reportDate?.[latestIdx]
-      ? formatQuarter(filings.reportDate?.[latestIdx])
-      : "Latest");
-  const previousQuarter = previousIdx !== undefined
-    ? uniqueHistory[1] ??
-      (filings.reportDate?.[previousIdx]
-        ? formatQuarter(filings.reportDate?.[previousIdx])
-        : undefined)
-    : undefined;
+  const latestQuarter = latestEntry.quarter;
+  const previousQuarter = previousEntry?.quarter;
 
   const filingsByQuarter: FilingsByQuarter = {
     [latestQuarter]: {
@@ -165,14 +174,17 @@ export async function fetchTwoQuarters(cik: string): Promise<Institution> {
   };
 }
 
-export async function fetch13F(cik: string = "0001067983"): Promise<Institution> {
-  const normalizedCik = cik.padStart(10, "0");
+export async function fetch13F(
+  cik: string = "0001067983",
+  quarter?: string
+): Promise<Institution> {
+  const normalizedCik = validateCik(cik);
   const cached = cache.get(normalizedCik);
   if (cached && cached.expiresAt > Date.now()) {
     return cached.data;
   }
 
-  const institution = await fetchTwoQuarters(normalizedCik);
+  const institution = await fetchTwoQuarters(normalizedCik, quarter);
   cache.set(normalizedCik, { expiresAt: Date.now() + CACHE_TTL_MS, data: institution });
   return institution;
 }

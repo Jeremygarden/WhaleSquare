@@ -7,8 +7,9 @@ app.use(cors());
 
 app.get("/api/13f/:cik", async (req, res) => {
   const cik = req.params.cik;
+  const quarter = typeof req.query.quarter === "string" ? req.query.quarter : undefined;
   try {
-    const data = await fetch13F(cik);
+    const data = await fetch13F(cik, quarter);
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: String(e) });
