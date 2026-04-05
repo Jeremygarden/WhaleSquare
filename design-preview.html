@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WhaleSquare Design System Preview</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0b0f14;
+        --surface: #111827;
+        --surface-2: #151c2d;
+        --border: #1f2937;
+        --text-strong: #f8fafc;
+        --text: #e5e7eb;
+        --text-muted: #9ca3af;
+        --accent: #3b82f6;
+        --accent-2: #f59e0b;
+        --success: #22c55e;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --info: #38bdf8;
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
+        --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.35);
+        --radius-sm: 4px;
+        --radius-md: 8px;
+        --radius-lg: 12px;
+        --font-display: "Fraunces", ui-serif, Georgia, serif;
+        --font-ui: "Instrument Sans", system-ui, sans-serif;
+        --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+        --space-2xs: 2px;
+        --space-xs: 4px;
+        --space-sm: 8px;
+        --space-md: 12px;
+        --space-lg: 16px;
+        --space-xl: 24px;
+        --space-2xl: 32px;
+        --space-3xl: 48px;
+        --space-4xl: 64px;
+      }
+
+      [data-theme="light"] {
+        --bg: #f8fafc;
+        --surface: #ffffff;
+        --surface-2: #f1f5f9;
+        --border: #e2e8f0;
+        --text-strong: #0f172a;
+        --text: #1f2937;
+        --text-muted: #475569;
+        --accent: #2563eb;
+        --accent-2: #d97706;
+        --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.1);
+        --shadow-md: 0 12px 32px rgba(15, 23, 42, 0.18);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: var(--font-ui);
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-display);
+        color: var(--text-strong);
+        margin: 0 0 12px 0;
+      }
+
+      .page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 48px 24px 96px;
+        display: flex;
+        flex-direction: column;
+        gap: 48px;
+      }
+
+      .hero {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 24px;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .hero p {
+        max-width: 560px;
+        color: var(--text-muted);
+        font-size: 16px;
+        line-height: 1.6;
+      }
+
+      .toggle {
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--text);
+        border-radius: 999px;
+        padding: 8px 14px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .section {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .grid {
+        display: grid;
+        gap: 16px;
+      }
+
+      .grid-2 {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      }
+
+      .grid-3 {
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      }
+
+      .swatch {
+        border-radius: var(--radius-md);
+        padding: 16px;
+        border: 1px solid var(--border);
+        background: var(--surface-2);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        font-size: 13px;
+      }
+
+      .swatch .chip {
+        height: 48px;
+        border-radius: var(--radius-sm);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .type-row {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .type-row .label {
+        text-transform: uppercase;
+        font-size: 12px;
+        color: var(--text-muted);
+        letter-spacing: 0.08em;
+      }
+
+      .type-row .sample {
+        font-size: 18px;
+      }
+
+      .type-row .data {
+        font-family: var(--font-mono);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .spacing-scale {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .space-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 13px;
+        color: var(--text-muted);
+      }
+
+      .space-bar {
+        height: 8px;
+        border-radius: 999px;
+        background: var(--accent);
+      }
+
+      .btn {
+        padding: 10px 16px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        font-weight: 600;
+        background: var(--surface-2);
+        color: var(--text);
+      }
+
+      .btn.primary {
+        background: var(--accent);
+        border-color: transparent;
+        color: white;
+      }
+
+      .btn.ghost {
+        background: transparent;
+        border-color: var(--border);
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        background: rgba(59, 130, 246, 0.15);
+        color: var(--accent);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+      }
+
+      .card {
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .table-row {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr;
+        gap: 12px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border);
+        font-family: var(--font-mono);
+        font-size: 13px;
+        align-items: center;
+      }
+
+      .metric-card {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 16px;
+      }
+
+      .metric-card .label {
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+      }
+
+      .metric-card .value {
+        font-size: 28px;
+        font-weight: 600;
+        color: var(--text-strong);
+      }
+
+      .metric-card .delta {
+        font-size: 12px;
+        color: var(--success);
+      }
+
+      .dashboard {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        gap: 20px;
+      }
+
+      .sidebar {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .sidebar .nav-item {
+        font-size: 14px;
+        color: var(--text-muted);
+      }
+
+      .sidebar .nav-item.active {
+        color: var(--text-strong);
+        font-weight: 600;
+      }
+
+      .table-header {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr;
+        gap: 12px;
+        padding-bottom: 8px;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+      }
+
+      .chip {
+        padding: 4px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 600;
+        background: rgba(34, 197, 94, 0.15);
+        color: var(--success);
+      }
+
+      @media (max-width: 900px) {
+        .dashboard {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <section class="hero">
+        <div>
+          <h1>WhaleSquare Design System</h1>
+          <p>
+            Built for institutional holdings data. Dense tables, precise metrics, fast scanning. A
+            professional financial UI that feels engineered, not decorated.
+          </p>
+        </div>
+        <button class="toggle" id="themeToggle">Toggle light / dark</button>
+      </section>
+
+      <section class="section">
+        <h2>Typography</h2>
+        <div class="grid grid-2">
+          <div class="type-row">
+            <div class="label">Display / Fraunces</div>
+            <div class="sample" style="font-family: var(--font-display); font-size: 28px;">
+              13F Holdings Tracker
+            </div>
+          </div>
+          <div class="type-row">
+            <div class="label">Body / Instrument Sans</div>
+            <div class="sample">
+              Institutional ownership trends, quarterly changes, and position concentration.
+            </div>
+          </div>
+          <div class="type-row">
+            <div class="label">Data / IBM Plex Mono</div>
+            <div class="sample data">AAPL 8,923,104 +4.21%</div>
+          </div>
+          <div class="type-row">
+            <div class="label">Buttons / UI</div>
+            <div class="sample">
+              <button class="btn primary">Compare Filings</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Color Palette</h2>
+        <div class="grid grid-3">
+          <div class="swatch">
+            <div class="chip" style="background: var(--bg);"></div>
+            <div>Background</div>
+            <div>#0B0F14</div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: var(--surface);"></div>
+            <div>Surface</div>
+            <div>#111827</div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: var(--surface-2);"></div>
+            <div>Surface 2</div>
+            <div>#151C2D</div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: var(--accent);"></div>
+            <div>Accent</div>
+            <div>#3B82F6</div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: var(--accent-2);"></div>
+            <div>Highlight</div>
+            <div>#F59E0B</div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: var(--success);"></div>
+            <div>Success</div>
+            <div>#22C55E</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Spacing Scale</h2>
+        <div class="spacing-scale">
+          <div class="space-item"><div class="space-bar" style="width: 8px;"></div>2xs / 2px</div>
+          <div class="space-item"><div class="space-bar" style="width: 16px;"></div>xs / 4px</div>
+          <div class="space-item"><div class="space-bar" style="width: 32px;"></div>sm / 8px</div>
+          <div class="space-item"><div class="space-bar" style="width: 48px;"></div>md / 12px</div>
+          <div class="space-item"><div class="space-bar" style="width: 64px;"></div>lg / 16px</div>
+          <div class="space-item"><div class="space-bar" style="width: 96px;"></div>xl / 24px</div>
+          <div class="space-item"><div class="space-bar" style="width: 128px;"></div>2xl / 32px</div>
+          <div class="space-item"><div class="space-bar" style="width: 192px;"></div>3xl / 48px</div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Component Samples</h2>
+        <div class="grid grid-3">
+          <div class="card">
+            <div class="badge">New filing</div>
+            <div style="font-weight: 600;">GQG Partners</div>
+            <div style="color: var(--text-muted); font-size: 13px;">Top 10 positions updated</div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn primary">View</button>
+              <button class="btn ghost">Follow</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="metric-card">
+              <div class="label">Total AUM</div>
+              <div class="value">$48.2B</div>
+              <div class="delta">+3.1% QoQ</div>
+            </div>
+          </div>
+          <div class="card">
+            <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted);">
+              Holdings Table Row
+            </div>
+            <div class="table-row">
+              <div>AAPL</div>
+              <div>8.9M</div>
+              <div>$1.71B</div>
+              <div>+4.21%</div>
+              <div><span class="chip">BUY</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Dashboard Mock</h2>
+        <div class="dashboard">
+          <div class="sidebar">
+            <div style="font-weight: 600;">WhaleSquare</div>
+            <div class="nav-item active">Dashboard</div>
+            <div class="nav-item">Institutions</div>
+            <div class="nav-item">Holdings</div>
+            <div class="nav-item">13F Changes</div>
+            <div class="nav-item">Alerts</div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h3>Q4 2025 Overview</h3>
+                <div style="color: var(--text-muted); font-size: 13px;">Latest filings processed</div>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn">Quarter: Q4 2025</button>
+                <button class="btn primary">Institution: Tiger Global</button>
+              </div>
+            </div>
+            <div class="grid grid-3">
+              <div class="metric-card">
+                <div class="label">Total Holdings</div>
+                <div class="value">328</div>
+                <div class="delta">+12</div>
+              </div>
+              <div class="metric-card">
+                <div class="label">Portfolio Value</div>
+                <div class="value">$62.4B</div>
+                <div class="delta" style="color: var(--success);">+5.9%</div>
+              </div>
+              <div class="metric-card">
+                <div class="label">Largest Position</div>
+                <div class="value">MSFT</div>
+                <div class="delta" style="color: var(--text-muted);">14.2% of AUM</div>
+              </div>
+            </div>
+            <div class="card" style="gap: 12px;">
+              <div class="table-header">
+                <div>Ticker</div>
+                <div>Shares</div>
+                <div>Value</div>
+                <div>QoQ</div>
+                <div>Action</div>
+              </div>
+              <div class="table-row">
+                <div>MSFT</div>
+                <div>12.3M</div>
+                <div>$4.8B</div>
+                <div>+1.3%</div>
+                <div><span class="chip">HOLD</span></div>
+              </div>
+              <div class="table-row">
+                <div>NVIDIA</div>
+                <div>6.2M</div>
+                <div>$2.1B</div>
+                <div style="color: var(--success);">+8.4%</div>
+                <div><span class="chip">BUY</span></div>
+              </div>
+              <div class="table-row" style="border-bottom: none;">
+                <div>AMZN</div>
+                <div>4.1M</div>
+                <div>$1.3B</div>
+                <div style="color: var(--danger);">-2.6%</div>
+                <div><span class="chip" style="background: rgba(239, 68, 68, 0.15); color: var(--danger);">SELL</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const toggle = document.getElementById('themeToggle');
+      toggle.addEventListener('click', () => {
+        const root = document.documentElement;
+        const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+      });
+    </script>
+  </body>
+</html>
