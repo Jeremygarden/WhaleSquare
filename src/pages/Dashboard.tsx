@@ -57,6 +57,31 @@ export default function Dashboard() {
     };
   }, [institution, selectedQuarter]);
 
+  const filtered = useMemo(() => {
+    if (!institution) return [];
+    return institution.holdings
+      .filter(
+        (h) =>
+          h.name.toLowerCase().includes(query.toLowerCase()) ||
+          h.ticker.toLowerCase().includes(query.toLowerCase())
+      )
+      .sort((a, b) =>
+        sortBy === "value" ? b.value - a.value : b.shares - a.shares
+      );
+  }, [institution, query, sortBy]);
+
+  const trendData = useMemo(() => {
+    const entries = Object.entries(filingsByQuarter);
+    if (entries.length) {
+      return entries
+        .map(([quarter, filing]) => ({ quarter, value: filing.totalValue }))
+        .sort((a, b) => a.quarter.localeCompare(b.quarter));
+    }
+    if (!institution) return [];
+    const fallbackQuarter = selectedQuarter || institution.quarter;
+    return [{ quarter: fallbackQuarter, value: institution.totalValue }];
+  }, [filingsByQuarter, institution, selectedQuarter]);
+
   if (loading && !institution) {
     return (
       <div className="dashboard">
@@ -95,32 +120,9 @@ export default function Dashboard() {
     );
   }
 
-  const availableQuarters = institution.filingHistory?.length
+  const availableQuarters = institution?.filingHistory?.length
     ? institution.filingHistory
-    : [institution.quarter];
-
-  const filtered = useMemo(() => {
-    return institution.holdings
-      .filter(
-        (h) =>
-          h.name.toLowerCase().includes(query.toLowerCase()) ||
-          h.ticker.toLowerCase().includes(query.toLowerCase())
-      )
-      .sort((a, b) =>
-        sortBy === "value" ? b.value - a.value : b.shares - a.shares
-      );
-  }, [institution.holdings, query, sortBy]);
-
-  const trendData = useMemo(() => {
-    const entries = Object.entries(filingsByQuarter);
-    if (entries.length) {
-      return entries
-        .map(([quarter, filing]) => ({ quarter, value: filing.totalValue }))
-        .sort((a, b) => a.quarter.localeCompare(b.quarter));
-    }
-    const fallbackQuarter = selectedQuarter || institution.quarter;
-    return [{ quarter: fallbackQuarter, value: institution.totalValue }];
-  }, [filingsByQuarter, institution.quarter, institution.totalValue, selectedQuarter]);
+    : [institution?.quarter ?? ""];
 
   return (
     <div className="dashboard">
