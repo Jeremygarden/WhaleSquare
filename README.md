@@ -1,73 +1,59 @@
-# React + TypeScript + Vite
+# WhaleSquare (WhaleWisdom Clone)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Track institutional 13F holdings with a fast, dark UI and real EDGAR data. Pick an institution, pick a quarter, and see holdings plus quarter-over-quarter deltas.
 
-Currently, two official plugins are available:
+## Features
+- Real EDGAR 13F XML parsing with caching and error handling
+- Institution selector (Berkshire, BlackRock, Vanguard, Tiger Global, Third Point)
+- Quarter selector with per-quarter holdings
+- Cross-quarter changeShares delta computation
+- Holdings table with sorting, sticky header, and horizontal scroll
+- Delta indicator with up/down arrows and count-up animation
+- Dashboard metrics strip (total value, holdings count, top holding, quarter)
+- Loading skeleton, empty state, and error cards
+- Dark design system with shared tokens (see DESIGN.md)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Quickstart
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev:full
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+- App: http://localhost:5173
+- EDGAR proxy: http://localhost:5174
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Using mock data
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Set `VITE_USE_MOCK=true` to bypass EDGAR and use local mock data.
+
+```bash
+VITE_USE_MOCK=true npm run dev
 ```
+
+## Scripts
+
+- `npm run dev` — Vite dev server
+- `npm run dev:server` — EDGAR proxy on :5174
+- `npm run dev:full` — app + proxy together
+- `npm run build` — typecheck + production build
+- `npm run preview` — serve production build
+- `npm run test` — run unit tests
+
+## Architecture (high level)
+
+- **Frontend**: React + Vite
+- **State**: Zustand for UI/data state
+- **Tables**: @tanstack/react-table for sorting and layout
+- **Server**: Express proxy to EDGAR 13F data (port 5174)
+
+## Docs
+
+- DESIGN.md — visual system and UI constraints
+- CONTRIBUTING.md — local setup, workflow, and testing
+- CHANGELOG.md — shipped changes
+- CLAUDE.md — project-specific instructions for agents
+
+## Notes
+
+The EDGAR proxy is required for real 13F data. If the proxy is down, the UI will surface an error state.
