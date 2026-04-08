@@ -1,4 +1,3 @@
-import fetch from "node-fetch";
 import type { FilingsByQuarter, Institution } from "../src/data/types";
 
 const SEC = "https://data.sec.gov";
