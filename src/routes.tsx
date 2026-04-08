@@ -10,6 +10,7 @@ export function AppRoutes() {
       <Route path="/" element={<Dashboard />} />
       <Route path="/institution/:cik" element={<Institution />} />
       <Route path="/filing/:accession" element={<Filing />} />
+      <Route path="/filing" element={<Filing />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
