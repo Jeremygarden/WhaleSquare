@@ -147,7 +147,7 @@ export default function Dashboard() {
           <div className="card metric-card">
             <div className="metric-label">Top Holding</div>
             <div className="metric-value">
-              {metrics.topHolding?.ticker || "—"}
+              {metrics.topHolding?.ticker || metrics.topHolding?.name || "—"}
             </div>
             <div className="metric-sub">
               {metrics.topHolding?.name || "No holdings"}
