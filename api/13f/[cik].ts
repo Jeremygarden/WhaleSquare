@@ -1,6 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
-// Types (inline to avoid cross-directory import issues with Vercel ESM)
 type Holding = {
   cusip: string;
   name: string;
@@ -23,7 +22,8 @@ type Institution = {
   filingsByQuarter?: FilingsByQuarter;
 };
 
-const SEC = "https://data.sec.gov";
+const SEC_DATA = "https://data.sec.gov";
+const SEC_WWW = "https://www.sec.gov";
 const UA = "WhaleSquare contact@example.com";
 
 function validateCik(cik: string): string {
@@ -38,17 +38,11 @@ function formatQuarter(dateString: string): string {
   return `${year} Q${Math.floor((month - 1) / 3) + 1}`;
 }
 
-type InfoTableEntry = {
-  nameOfIssuer: string;
-  cusip: string;
-  value: number;
-  sshPrnamt: number;
-};
+type InfoTableEntry = { nameOfIssuer: string; cusip: string; value: number; sshPrnamt: number };
 
 function getTagValue(block: string, tag: string): string {
-  const regex = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i");
-  const match = block.match(regex);
-  return match ? match[1].trim() : "";
+  const m = block.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i"));
+  return m ? m[1].trim() : "";
 }
 
 function parseInfoTables(xml: string): InfoTableEntry[] {
@@ -56,41 +50,76 @@ function parseInfoTables(xml: string): InfoTableEntry[] {
   const re = /<infoTable>([\s\S]*?)<\/infoTable>/gi;
   let m: RegExpExecArray | null;
   while ((m = re.exec(xml))) {
+    // handle nested <shrsOrPrnAmt><sshPrnamt>...</sshPrnamt></shrsOrPrnAmt>
+    const sshPrnamt =
+      Number(getTagValue(m[1], "sshPrnamt")) ||
+      Number(getTagValue(m[1], "sshprnamttype") ? "0" : getTagValue(m[1], "sshPrnamt")) ||
+      0;
     tables.push({
       nameOfIssuer: getTagValue(m[1], "nameOfIssuer"),
       cusip: getTagValue(m[1], "cusip"),
       value: Number(getTagValue(m[1], "value")) || 0,
-      sshPrnamt: Number(getTagValue(m[1], "sshPrnamt")) || 0,
+      sshPrnamt,
     });
   }
   return tables;
 }
 
-async function fetchFilingXml(cik: string, accession: string, primaryDoc: string) {
-  const url = `${SEC}/Archives/edgar/data/${parseInt(cik, 10)}/${accession}/${primaryDoc}`;
+// Fetch the filing index and find the info table XML filename
+async function findInfoTableDoc(cikInt: number, accessionDashed: string): Promise<string | null> {
+  const indexUrl = `${SEC_WWW}/Archives/edgar/data/${cikInt}/${accessionDashed.replace(/-/g, "")}/`;
+  const res = await fetch(indexUrl, { headers: { "User-Agent": UA } });
+  if (!res.ok) return null;
+  const html = await res.text();
+  // Look for INFORMATION TABLE link in the index
+  const match = html.match(/href="[^"]*\/([^"/]+\.xml)"/gi)?.find(h =>
+    !h.includes("xslForm") && !h.includes("primary_doc")
+  );
+  if (match) {
+    const filename = match.match(/href="[^"]*\/([^"/]+\.xml)"/i)?.[1];
+    return filename ?? null;
+  }
+  return null;
+}
+
+async function fetchInfoTableXml(cikInt: number, accession: string): Promise<string> {
+  const accNoDash = accession.replace(/-/g, "");
+  // First try: find info table doc from filing index
+  const infoTableDoc = await findInfoTableDoc(cikInt, accession);
+  if (infoTableDoc) {
+    const url = `${SEC_WWW}/Archives/edgar/data/${cikInt}/${accNoDash}/${infoTableDoc}`;
+    const res = await fetch(url, { headers: { "User-Agent": UA } });
+    if (res.ok) return res.text();
+  }
+  // Fallback: try primary_doc.xml directly
+  const url = `${SEC_WWW}/Archives/edgar/data/${cikInt}/${accNoDash}/primary_doc.xml`;
   const res = await fetch(url, { headers: { "User-Agent": UA } });
-  if (!res.ok) throw new Error(`SEC filing fetch failed: ${res.status}`);
+  if (!res.ok) throw new Error(`SEC filing fetch failed: ${res.status} (CIK ${cikInt}, acc ${accNoDash})`);
   return res.text();
 }
 
 function buildHoldings(entries: InfoTableEntry[], prev = new Map<string, number>()) {
   const totalValue = entries.reduce((s, e) => s + e.value, 0);
-  const holdings: Holding[] = entries.map((e) => ({
-    cusip: e.cusip,
-    name: e.nameOfIssuer,
-    ticker: "",
-    shares: e.sshPrnamt,
-    value: e.value,
-    weight: totalValue > 0 ? (e.value / totalValue) * 100 : 0,
-    changeShares: e.sshPrnamt - (prev.get(e.cusip) ?? 0),
-  }));
-  return { holdings, totalValue };
+  return {
+    holdings: entries.map((e) => ({
+      cusip: e.cusip,
+      name: e.nameOfIssuer,
+      ticker: "",
+      shares: e.sshPrnamt,
+      value: e.value,
+      weight: totalValue > 0 ? (e.value / totalValue) * 100 : 0,
+      changeShares: e.sshPrnamt - (prev.get(e.cusip) ?? 0),
+    })),
+    totalValue,
+  };
 }
 
 async function fetch13F(cik: string, quarter?: string): Promise<Institution> {
   const n = validateCik(cik);
-  const res = await fetch(`${SEC}/submissions/CIK${n}.json`, { headers: { "User-Agent": UA } });
+  const cikInt = parseInt(n, 10);
+  const res = await fetch(`${SEC_DATA}/submissions/CIK${n}.json`, { headers: { "User-Agent": UA } });
   if (!res.ok) throw new Error(`SEC submissions failed: ${res.status}`);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const data: any = await res.json();
 
   const filings = data.filings.recent;
@@ -100,29 +129,32 @@ async function fetch13F(cik: string, quarter?: string): Promise<Institution> {
 
   const entries = indices.map((i) => ({
     index: i,
+    accession: filings.accessionNumber[i] as string,
     quarter: formatQuarter(filings.reportDate?.[i] ?? filings.filingDate?.[i] ?? ""),
   }));
+
   const ti = quarter ? entries.findIndex((e) => e.quarter === quarter) : 0;
   if (ti === -1) throw new Error(`Quarter ${quarter} not found`);
 
-  const cur = entries[ti], prev = entries[ti + 1];
-  const acc = filings.accessionNumber[cur.index].replace(/-/g, "");
-  const doc = filings.primaryDocument[cur.index];
-  const xml = await fetchFilingXml(n, acc, doc);
-  const curTables = parseInfoTables(xml);
+  const cur = entries[ti];
+  const prev = entries[ti + 1];
+
+  const curXml = await fetchInfoTableXml(cikInt, cur.accession);
+  const curTables = parseInfoTables(curXml);
 
   let prevTables: InfoTableEntry[] = [];
   if (prev) {
-    const pAcc = filings.accessionNumber[prev.index].replace(/-/g, "");
-    const pDoc = filings.primaryDocument[prev.index];
-    prevTables = parseInfoTables(await fetchFilingXml(n, pAcc, pDoc));
+    const prevXml = await fetchInfoTableXml(cikInt, prev.accession);
+    prevTables = parseInfoTables(prevXml);
   }
 
   const prevMap = new Map(prevTables.map((e) => [e.cusip, e.sshPrnamt]));
   const latest = buildHoldings(curTables, prevMap);
   const previous = buildHoldings(prevTables);
 
-  const fbq: FilingsByQuarter = { [cur.quarter]: { holdings: latest.holdings, totalValue: latest.totalValue } };
+  const fbq: FilingsByQuarter = {
+    [cur.quarter]: { holdings: latest.holdings, totalValue: latest.totalValue },
+  };
   if (prev) fbq[prev.quarter] = { holdings: previous.holdings, totalValue: previous.totalValue };
 
   return {
