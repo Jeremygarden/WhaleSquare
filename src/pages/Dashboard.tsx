@@ -47,7 +47,7 @@ export default function Dashboard() {
 
   const metrics = useMemo(() => {
     if (!institution) return null;
-    const holdingsCount = institution.holdings.length;
+    const holdingsCount = institution.holdingsCount ?? institution.holdings.length;
     const topHolding = [...institution.holdings].sort((a, b) => b.value - a.value)[0];
     return {
       totalValue: `$${formatNumber(institution.totalValue)}`,

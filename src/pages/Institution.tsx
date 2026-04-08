@@ -68,7 +68,7 @@ export default function Institution() {
 
   const metrics = useMemo(() => {
     if (!institution) return null;
-    const holdingsCount = holdings.length;
+    const holdingsCount = institution.holdingsCount ?? holdings.length;
     const topHolding = [...holdings].sort((a, b) => b.value - a.value)[0];
     const newPositions = holdings.filter(
       (holding) => holding.changeShares === holding.shares
@@ -269,7 +269,7 @@ export default function Institution() {
                 gap: 8,
               }}
             >
-              <div style={{ fontWeight: 600 }}>{holding.ticker}</div>
+              <div style={{ fontWeight: 600 }}>{holding.ticker || holding.name}</div>
               <div style={{ color: "var(--color-text-muted)", fontSize: 13 }}>
                 ${formatNumber(holding.value)}
               </div>

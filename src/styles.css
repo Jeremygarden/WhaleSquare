@@ -530,3 +530,81 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* Responsive: tablets */
+@media (max-width: 768px) {
+  .app-header {
+    flex-wrap: wrap;
+    padding: 10px 16px;
+  }
+
+  .nav-links {
+    display: none;
+  }
+
+  .nav-toggle {
+    display: block !important;
+  }
+
+  .metrics {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .dashboard-narrow {
+    max-width: 100%;
+  }
+
+  .app-main {
+    padding: 0 8px;
+  }
+
+  h1 {
+    font-size: 1.3rem;
+  }
+}
+
+/* Responsive: mobile */
+@media (max-width: 480px) {
+  .metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .metric-value {
+    font-size: 1rem !important;
+  }
+
+  .metric-label {
+    font-size: 0.65rem;
+  }
+
+  .styled-select {
+    min-width: 120px;
+    font-size: 0.78rem;
+    padding: 6px 28px 6px 10px;
+  }
+
+  .selector-row {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 12px;
+  }
+
+  .brand-title {
+    font-size: 0.85rem !important;
+  }
+
+  .quarter-badge {
+    font-size: 0.65rem;
+    padding: 2px 6px;
+  }
+}

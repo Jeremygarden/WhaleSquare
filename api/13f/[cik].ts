@@ -164,17 +164,26 @@ async function fetch13F(cik: string, quarter?: string): Promise<Institution> {
   const latest = buildHoldings(curTables, prevMap);
   const previous = buildHoldings(prevTables);
 
+  // Limit holdings to top 200 by value to avoid multi-MB responses (Vanguard has 4000+)
+  const MAX_HOLDINGS = 200;
+  const trimHoldings = (h: Holding[]) =>
+    [...h].sort((a, b) => b.value - a.value).slice(0, MAX_HOLDINGS);
+
+  const latestTrimmed = trimHoldings(latest.holdings);
+  const previousTrimmed = trimHoldings(previous.holdings);
+
   const fbq: FilingsByQuarter = {
-    [cur.quarter]: { holdings: latest.holdings, totalValue: latest.totalValue },
+    [cur.quarter]: { holdings: latestTrimmed, totalValue: latest.totalValue },
   };
-  if (prev) fbq[prev.quarter] = { holdings: previous.holdings, totalValue: previous.totalValue };
+  if (prev) fbq[prev.quarter] = { holdings: previousTrimmed, totalValue: previous.totalValue };
 
   return {
     cik: n,
     name: data.name,
     quarter: cur.quarter,
     totalValue: latest.totalValue,
-    holdings: latest.holdings,
+    holdingsCount: latest.holdings.length,
+    holdings: latestTrimmed,
     filingHistory: [...new Set(entries.map((e) => e.quarter))],
     filingsByQuarter: fbq,
   };
