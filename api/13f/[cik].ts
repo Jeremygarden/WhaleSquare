@@ -99,9 +99,21 @@ async function fetchInfoTableXml(cikInt: number, accession: string): Promise<str
 }
 
 function buildHoldings(entries: InfoTableEntry[], prev = new Map<string, number>()) {
-  const totalValue = entries.reduce((s, e) => s + e.value, 0);
+  // Merge duplicate CUSIPs (same security reported under different voting authority rows)
+  const merged = new Map<string, InfoTableEntry>();
+  for (const e of entries) {
+    const existing = merged.get(e.cusip);
+    if (existing) {
+      existing.value += e.value;
+      existing.sshPrnamt += e.sshPrnamt;
+    } else {
+      merged.set(e.cusip, { ...e });
+    }
+  }
+  const deduped = [...merged.values()];
+  const totalValue = deduped.reduce((s, e) => s + e.value, 0);
   return {
-    holdings: entries.map((e) => ({
+    holdings: deduped.map((e) => ({
       cusip: e.cusip,
       name: e.nameOfIssuer,
       ticker: "",

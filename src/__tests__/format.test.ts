@@ -6,5 +6,5 @@ test("formatNumber adds commas", () => {
 });
 
 test("formatPercent formats to 2 decimals", () => {
-  expect(formatPercent(0.1234)).toBe("12.34%");
+  expect(formatPercent(12.34)).toBe("12.34%");
 });

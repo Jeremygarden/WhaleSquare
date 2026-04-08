@@ -1,49 +1,51 @@
 import { useMemo, useRef, useState } from "react";
 import type { Holding } from "../data/types";
-import { formatNumber } from "../utils/format";
 
-type TooltipState = {
-  label: string;
-  value: string;
-  delta: string;
-  x: number;
-  y: number;
-};
+type TooltipState = { label: string; value: string; delta: string; x: number; y: number };
+
+function shortName(name: string, max = 14): string {
+  if (name.length <= max) return name;
+  return name.slice(0, max - 1) + "…";
+}
+
+function formatValue(v: number): string {
+  if (v >= 1e9) return `$${(v / 1e9).toFixed(1)}B`;
+  if (v >= 1e6) return `$${(v / 1e6).toFixed(0)}M`;
+  return `$${v.toLocaleString("en-US")}`;
+}
 
 export function TopHoldingsBar({ holdings }: { holdings: Holding[] }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
 
-  const data = useMemo(() => {
-    return [...holdings]
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 10);
-  }, [holdings]);
+  const data = useMemo(
+    () => [...holdings].sort((a, b) => b.value - a.value).slice(0, 10),
+    [holdings]
+  );
 
-  const maxValue = Math.max(...data.map((item) => item.value), 1);
-  const maxDelta = Math.max(...data.map((item) => Math.abs(item.changeShares)), 1);
+  const maxValue = Math.max(...data.map((d) => d.value), 1);
+  const maxDelta = Math.max(...data.map((d) => Math.abs(d.changeShares)), 1);
 
-  const chartWidth = 520;
-  const labelWidth = 120;
-  const barHeight = 16;
-  const barGap = 12;
-  const chartHeight = data.length * (barHeight + barGap) + 10;
+  // Layout columns (SVG units)
+  const W = 600;           // total viewBox width
+  const nameW = 90;        // name label column
+  const valueW = 72;       // value label column (right side)
+  const gap = 6;
+  const barAreaX = nameW + gap;
+  const barAreaW = W - nameW - gap - gap - valueW;  // ~432
+  const barH = 16;
+  const rowGap = 10;
+  const H = data.length * (barH + rowGap) + 4;
 
-  const handleHover = (
-    event: React.MouseEvent<SVGRectElement>,
-    label: string,
-    value: number,
-    delta: number
-  ) => {
-    const container = containerRef.current;
-    if (!container) return;
-    const rect = container.getBoundingClientRect();
+  const handleHover = (e: React.MouseEvent<SVGRectElement>, item: Holding) => {
+    const r = containerRef.current?.getBoundingClientRect();
+    if (!r) return;
     setTooltip({
-      label,
-      value: `$${formatNumber(value)}`,
-      delta: `${delta >= 0 ? "+" : ""}${formatNumber(delta)} shares`,
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top,
+      label: item.name,
+      value: formatValue(item.value),
+      delta: `${item.changeShares >= 0 ? "+" : ""}${item.changeShares.toLocaleString()} sh`,
+      x: e.clientX - r.left,
+      y: e.clientY - r.top,
     });
   };
 
@@ -55,66 +57,68 @@ export function TopHoldingsBar({ holdings }: { holdings: Holding[] }) {
       </div>
       <div style={{ position: "relative" }}>
         <svg
-          viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+          viewBox={`0 0 ${W} ${H}`}
           width="100%"
-          height={chartHeight}
+          height={H}
           role="img"
           aria-label="Top holdings bar chart"
         >
-          {data.map((item, index) => {
-            const y = 5 + index * (barHeight + barGap);
-            const valueWidth =
-              ((chartWidth - labelWidth - 20) * item.value) / maxValue;
-            const deltaWidth =
-              ((chartWidth - labelWidth - 20) * Math.abs(item.changeShares)) /
-              maxDelta;
-            const deltaColor =
-              item.changeShares >= 0 ? "var(--color-success)" : "var(--color-danger)";
+          {data.map((item, i) => {
+            const y = 2 + i * (barH + rowGap);
+            const bw = (barAreaW * item.value) / maxValue;
+            const dw = (barAreaW * Math.abs(item.changeShares)) / maxDelta;
+            const dc = item.changeShares >= 0 ? "var(--color-success)" : "var(--color-danger)";
+            const label = shortName(item.ticker || item.name);
 
             return (
-              <g key={item.cusip}>
+              <g key={item.cusip + i}>
+                {/* Name */}
                 <text
-                  x={0}
-                  y={y + barHeight * 0.8}
+                  x={nameW}
+                  y={y + barH * 0.78}
+                  textAnchor="end"
                   fill="var(--color-text)"
-                  fontSize="12"
+                  fontSize="10"
                   fontFamily="var(--font-mono)"
                 >
-                  {item.ticker}
+                  {label}
                 </text>
+                {/* Value bar */}
                 <rect
-                  x={labelWidth}
+                  x={barAreaX}
                   y={y}
-                  width={valueWidth}
-                  height={barHeight}
-                  rx={6}
+                  width={bw}
+                  height={barH}
+                  rx={4}
                   fill="var(--color-accent)"
                   opacity={0.85}
-                  onMouseMove={(event) =>
-                    handleHover(event, item.name, item.value, item.changeShares)
-                  }
+                  style={{ cursor: "pointer" }}
+                  onMouseMove={(e) => handleHover(e, item)}
                   onMouseLeave={() => setTooltip(null)}
                 />
+                {/* Delta overlay */}
                 {item.changeShares !== 0 && (
                   <rect
-                    x={labelWidth}
-                    y={y + barHeight * 0.3}
-                    width={deltaWidth}
-                    height={barHeight * 0.4}
-                    rx={4}
-                    fill={deltaColor}
+                    x={barAreaX}
+                    y={y + barH * 0.3}
+                    width={Math.min(dw, bw)}
+                    height={barH * 0.4}
+                    rx={3}
+                    fill={dc}
                     opacity={0.9}
+                    style={{ pointerEvents: "none" }}
                   />
                 )}
+                {/* Value label — right column */}
                 <text
-                  x={chartWidth}
-                  y={y + barHeight * 0.8}
+                  x={W}
+                  y={y + barH * 0.78}
                   textAnchor="end"
                   fill="var(--color-text-muted)"
-                  fontSize="12"
+                  fontSize="10"
                   fontFamily="var(--font-mono)"
                 >
-                  ${formatNumber(item.value)}
+                  {formatValue(item.value)}
                 </text>
               </g>
             );
