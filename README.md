@@ -1,17 +1,29 @@
-# WhaleSquare (WhaleWisdom Clone)
+# WhaleSquare
 
-Track institutional 13F holdings with a fast, dark UI and real EDGAR data. Pick an institution, pick a quarter, and see holdings plus quarter-over-quarter deltas.
+**Track institutional equity holdings from SEC 13F filings — in real time, with a clean dark UI.**
+
+Pick an institution, select a quarter, and instantly see their full portfolio: position weights, quarter-over-quarter share changes, and value breakdowns.
+
+![Portfolio charts showing donut and bar chart for Berkshire Hathaway holdings](./public/screenshot-charts.png)
+
+---
 
 ## Features
-- Real EDGAR 13F XML parsing with caching and error handling
-- Institution selector (Berkshire, BlackRock, Vanguard, Tiger Global, Third Point)
-- Quarter selector with per-quarter holdings
-- Cross-quarter changeShares delta computation
-- Holdings table with sorting, sticky header, and horizontal scroll
-- Delta indicator with up/down arrows and count-up animation
-- Dashboard metrics strip (total value, holdings count, top holding, quarter)
-- Loading skeleton, empty state, and error cards
-- Dark design system with shared tokens (see DESIGN.md)
+
+- **Live EDGAR data** — parses real SEC 13F XML filings with in-memory caching
+- **Institution selector** — Berkshire Hathaway, BlackRock, Vanguard, Tiger Global, Third Point
+- **Quarter switching** — per-quarter holdings with historical comparison
+- **Cross-quarter deltas** — `changeShares` computed against prior filing automatically
+- **Holdings table** — sortable columns, sticky header, horizontal scroll on mobile
+- **Portfolio charts** — weight donut + top holdings bar, rendered as hand-written SVG (no chart library)
+- **Value Trend** — quarter-over-quarter portfolio value curve
+- **Metrics strip** — total value, holdings count, largest position, new positions this quarter
+- **Delta animations** — count-up animation with directional arrows via Framer Motion
+- **Loading skeletons + error states** — graceful fallback at every data boundary
+- **Dark design system** — consistent tokens for color, spacing, typography (see `DESIGN.md`)
+- **Responsive** — adapts from desktop to mobile; charts reflow on narrow screens
+
+---
 
 ## Quickstart
 
@@ -20,40 +32,65 @@ npm install
 npm run dev:full
 ```
 
-- App: http://localhost:5173
-- EDGAR proxy: http://localhost:5174
+- App → http://localhost:5173  
+- EDGAR proxy → http://localhost:5174
 
-### Using mock data
-
-Set `VITE_USE_MOCK=true` to bypass EDGAR and use local mock data.
+### Mock mode
 
 ```bash
 VITE_USE_MOCK=true npm run dev
 ```
 
+Bypasses EDGAR and uses bundled mock data — useful for UI development offline.
+
+---
+
 ## Scripts
 
-- `npm run dev` — Vite dev server
-- `npm run dev:server` — EDGAR proxy on :5174
-- `npm run dev:full` — app + proxy together
-- `npm run build` — typecheck + production build
-- `npm run preview` — serve production build
-- `npm run test` — run unit tests
+| Command | Description |
+|---|---|
+| `npm run dev` | Vite dev server only |
+| `npm run dev:server` | EDGAR proxy on :5174 only |
+| `npm run dev:full` | App + proxy together (recommended) |
+| `npm run build` | Type-check + production build |
+| `npm run preview` | Serve production build locally |
+| `npm run test` | Run unit tests (Vitest) |
 
-## Architecture (high level)
+---
 
-- **Frontend**: React + Vite
-- **State**: Zustand for UI/data state
-- **Tables**: @tanstack/react-table for sorting and layout
-- **Server**: Express proxy to EDGAR 13F data (port 5174)
+## Architecture
+
+```
+src/
+  pages/          Dashboard, Institution, Filing
+  components/     HoldingsTable, WeightDonut, TopHoldingsBar, ValueTrend, Sparkline, …
+  store/          Zustand global state
+  data/           EDGAR fetch client + types
+  utils/          formatNumber, formatPercent, transitions
+
+api/
+  13f/[cik].ts   Vercel Serverless Function — EDGAR proxy + CUSIP dedup + top-200 trim
+
+server/
+  index.ts        Express dev proxy (local only)
+  edgarProxy.ts   Core EDGAR fetch + cache logic
+```
+
+**Stack:** React · TypeScript · Vite · Zustand · TanStack Table · Framer Motion · Vercel
+
+---
+
+## Deployment
+
+Production: [whale-square.vercel.app](https://whale-square.vercel.app)
+
+The Vercel Serverless Function handles all SEC EDGAR fetching server-side with a 5-minute CDN cache (`s-maxage=300`). No backend required in production.
+
+---
 
 ## Docs
 
-- DESIGN.md — visual system and UI constraints
-- CONTRIBUTING.md — local setup, workflow, and testing
-- CHANGELOG.md — shipped changes
-- CLAUDE.md — project-specific instructions for agents
-
-## Notes
-
-The EDGAR proxy is required for real 13F data. If the proxy is down, the UI will surface an error state.
+- `DESIGN.md` — visual system, color tokens, typography
+- `CONTRIBUTING.md` — local setup, workflow, branching, and testing
+- `CHANGELOG.md` — shipped changes by date
+- `CLAUDE.md` — agent-specific instructions for AI-assisted development
