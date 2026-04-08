@@ -45,6 +45,19 @@ export default function Dashboard() {
     };
   }, [loadMock, selectedCik, setSelectedCik]);
 
+  // Prefetch all other institutions silently after initial load
+  const { loadReal } = useHoldingsStore();
+  useEffect(() => {
+    if (!institution) return;
+    const others = INSTITUTIONS.filter((i) => i.cik !== selectedCik);
+    // Stagger prefetch to avoid hammering SEC
+    others.forEach((inst, idx) => {
+      setTimeout(() => { loadReal(inst.cik).catch(() => {}); }, (idx + 1) * 1500);
+    });
+    // Only run once after first institution loads
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [!!institution]);
+
   const metrics = useMemo(() => {
     if (!institution) return null;
     const holdingsCount = institution.holdingsCount ?? institution.holdings.length;
