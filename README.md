@@ -1,29 +1,31 @@
 # WhaleSquare
 
-**Track institutional equity holdings from SEC 13F filings — in real time, with a clean dark UI.**
+**Track institutional equity holdings from SEC 13F filings — live data, dark UI, zero fluff.**
 
-Pick an institution, select a quarter, and instantly see their full portfolio: position weights, quarter-over-quarter share changes, and value breakdowns.
-
-![Portfolio charts showing donut and bar chart for Berkshire Hathaway holdings](./public/screenshot-charts.png)
-
-![13F Filing view showing Berkshire Hathaway 2025 Q4 holdings table with share deltas and weights](./public/screenshot-filing.png)
+Pick an institution, select a quarter, and instantly see their full portfolio: position weights, quarter-over-quarter share changes, value breakdowns, and holding history.
 
 ---
 
-## Features
+## Screenshots
 
-- **Live EDGAR data** — parses real SEC 13F XML filings with in-memory caching
-- **Institution selector** — Berkshire Hathaway, BlackRock, Vanguard, Tiger Global, Third Point
-- **Quarter switching** — per-quarter holdings with historical comparison
-- **Cross-quarter deltas** — `changeShares` computed against prior filing automatically
-- **Holdings table** — sortable columns, sticky header, horizontal scroll on mobile
-- **Portfolio charts** — weight donut + top holdings bar, rendered as hand-written SVG (no chart library)
+![Institution page showing Berkshire Hathaway 2025 Q4 holdings table with metrics strip and holding history sparklines](./public/screenshot-institution.png)
+
+![Dashboard charts — portfolio weight donut and top holdings bar with share change legend](./public/screenshot-dashboard.png)
+
+---
+
+## Highlights
+
+- **Live SEC EDGAR data** — real 13F XML parsed on-demand, no third-party data vendor
+- **Quarter-over-quarter deltas** — `Δ Shares` computed automatically against the prior filing
+- **Portfolio charts** — weight donut + top-10 holdings bar, hand-written SVG (no chart library)
 - **Value Trend** — quarter-over-quarter portfolio value curve
-- **Metrics strip** — total value, holdings count, largest position, new positions this quarter
-- **Delta animations** — count-up animation with directional arrows via Framer Motion
-- **Loading skeletons + error states** — graceful fallback at every data boundary
-- **Dark design system** — consistent tokens for color, spacing, typography (see `DESIGN.md`)
-- **Responsive** — adapts from desktop to mobile; charts reflow on narrow screens
+- **Metrics strip** — total AUM, holdings count, largest position, new positions this quarter
+- **Holdings table** — sortable columns, sticky header, row-level action badges
+- **Holding History** — sparkline cards for top 5 positions
+- **Client-side cache** — institution data cached in-memory (5 min TTL); background prefetch on load so switching institutions is instant
+- **Responsive** — adapts from widescreen to mobile; charts and metrics reflow gracefully
+- **Dark design system** — consistent tokens for color, spacing, and typography (see `DESIGN.md`)
 
 ---
 
@@ -34,7 +36,7 @@ npm install
 npm run dev:full
 ```
 
-- App → http://localhost:5173  
+- App → http://localhost:5173
 - EDGAR proxy → http://localhost:5174
 
 ### Mock mode
@@ -66,7 +68,7 @@ Bypasses EDGAR and uses bundled mock data — useful for UI development offline.
 src/
   pages/          Dashboard, Institution, Filing
   components/     HoldingsTable, WeightDonut, TopHoldingsBar, ValueTrend, Sparkline, …
-  store/          Zustand global state
+  store/          Zustand global state (with institution cache)
   data/           EDGAR fetch client + types
   utils/          formatNumber, formatPercent, transitions
 
@@ -86,7 +88,7 @@ server/
 
 Production: [whale-square.vercel.app](https://whale-square.vercel.app)
 
-The Vercel Serverless Function handles all SEC EDGAR fetching server-side with a 5-minute CDN cache (`s-maxage=300`). No backend required in production.
+All SEC EDGAR fetching is handled server-side via Vercel Serverless Functions with a 5-minute CDN cache (`s-maxage=300`). No separate backend required in production.
 
 ---
 
