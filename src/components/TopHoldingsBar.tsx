@@ -53,7 +53,21 @@ export function TopHoldingsBar({ holdings }: { holdings: Holding[] }) {
     <div className="card chart-card" ref={containerRef}>
       <div>
         <div className="chart-title">Top Holdings</div>
-        <div className="chart-subtitle">Value with delta share overlay</div>
+        <div className="chart-subtitle">Value with quarter-over-quarter share change</div>
+        <div style={{ display: "flex", gap: 16, marginTop: 6, fontSize: "0.72rem", color: "var(--color-text-muted)" }}>
+          <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <span style={{ width: 12, height: 6, borderRadius: 3, background: "var(--color-accent)", display: "inline-block" }} />
+            Holding Value
+          </span>
+          <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <span style={{ width: 12, height: 6, borderRadius: 3, background: "var(--color-success)", display: "inline-block" }} />
+            Shares Added
+          </span>
+          <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <span style={{ width: 12, height: 6, borderRadius: 3, background: "var(--color-danger)", display: "inline-block" }} />
+            Shares Reduced
+          </span>
+        </div>
       </div>
       <div style={{ position: "relative" }}>
         <svg

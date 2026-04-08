@@ -161,15 +161,16 @@ export default function Dashboard() {
         </div>
       )}
       <div
-        className="card"
-        style={{ display: "flex", gap: 12, alignItems: "center", padding: "12px 16px" }}
+        className="card selector-row"
       >
-        <label htmlFor="institution-select" style={{ fontWeight: 600 }}>
+        <label htmlFor="institution-select" className="selector-label">
           Institution
         </label>
         <select
           id="institution-select"
+          className="styled-select"
           value={selectedCik}
+          disabled={loading}
           onChange={(event) => {
             const cik = event.target.value;
             setError(null);
@@ -179,22 +180,23 @@ export default function Dashboard() {
             });
           }}
         >
-          {INSTITUTIONS.map((institution) => (
-            <option key={institution.cik} value={institution.cik}>
-              {institution.name}
+          {INSTITUTIONS.map((inst) => (
+            <option key={inst.cik} value={inst.cik}>
+              {inst.name}
             </option>
           ))}
         </select>
+        {loading && <span className="selector-spinner">⏳</span>}
       </div>
       <div
-        className="card"
-        style={{ display: "flex", gap: 12, alignItems: "center", padding: "12px 16px" }}
+        className="card selector-row"
       >
-        <label htmlFor="quarter-select" style={{ fontWeight: 600 }}>
+        <label htmlFor="quarter-select" className="selector-label">
           Quarter
         </label>
         <select
           id="quarter-select"
+          className="styled-select"
           value={selectedQuarter || availableQuarters[0]}
           onChange={(event) => setSelectedQuarter(event.target.value)}
         >
@@ -270,8 +272,8 @@ export default function Dashboard() {
             {showCharts && (
               <>
                 <div className="charts-grid">
-                  <WeightDonut holdings={filtered} />
-                  <TopHoldingsBar holdings={filtered} />
+                  <WeightDonut holdings={institution.holdings} />
+                  <TopHoldingsBar holdings={institution.holdings} />
                 </div>
                 <ValueTrend data={trendData} />
               </>
