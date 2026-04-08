@@ -6,6 +6,8 @@ Pick an institution, select a quarter, and instantly see their full portfolio: p
 
 ![Portfolio charts showing donut and bar chart for Berkshire Hathaway holdings](./public/screenshot-charts.png)
 
+![13F Filing view showing Berkshire Hathaway 2025 Q4 holdings table with share deltas and weights](./public/screenshot-filing.png)
+
 ---
 
 ## Features
