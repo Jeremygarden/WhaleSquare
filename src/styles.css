@@ -440,3 +440,34 @@
     max-height: none;
   }
 }
+
+/* Mobile table: ensure horizontal scroll, hide low-priority columns */
+@media (max-width: 640px) {
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    min-width: 540px;
+  }
+
+  /* Hide Ticker column on small screens */
+  th:nth-child(2),
+  td:nth-child(2) {
+    display: none;
+  }
+
+  /* Compact number font size */
+  td {
+    font-size: 0.72rem;
+  }
+
+  .metric-cards {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .metric-value {
+    font-size: 1.1rem !important;
+  }
+}

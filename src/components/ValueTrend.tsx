@@ -80,7 +80,7 @@ export function ValueTrend({ data }: { data: TrendPoint[] }) {
     <div className="card chart-card" ref={containerRef}>
       <div>
         <div className="chart-title">Portfolio Value Trend</div>
-        <div className="chart-subtitle">Mock quarterly totals</div>
+        <div className="chart-subtitle">Quarterly portfolio value</div>
       </div>
       <div style={{ position: "relative" }}>
         <svg

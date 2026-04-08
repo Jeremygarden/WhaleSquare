@@ -10,7 +10,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="brand-title">
             {institution?.name ?? "WhaleSquare Capital"}
           </div>
-          <span className="quarter-badge">{institution?.quarter ?? "Q4 2024"}</span>
+          <span className="quarter-badge">{institution?.quarter ?? "—"}</span>
         </div>
         <nav className="nav-links">
           <a className="nav-link" href="/">Dashboard</a>

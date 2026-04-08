@@ -177,7 +177,7 @@ export default function Institution() {
           </div>
           <div className="card metric-card">
             <div className="metric-label">Largest Pos</div>
-            <div className="metric-value">{metrics.topHolding?.ticker ?? "—"}</div>
+            <div className="metric-value">{metrics.topHolding?.ticker || metrics.topHolding?.name?.split(" ").slice(0,2).join(" ") || "—"}</div>
             <div className="metric-sub">
               {metrics.topHolding
                 ? `$${formatNumber(metrics.topHolding.value)}`

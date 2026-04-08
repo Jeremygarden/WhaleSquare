@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useHoldingsStore } from "../store/useHoldingsStore";
@@ -22,9 +22,17 @@ const TAB_LABELS: Record<TabKey, string> = {
 const TAB_ORDER: TabKey[] = ["all", "new", "exited", "increased", "decreased"];
 
 export default function Filing() {
-  const { institution } = useHoldingsStore();
+  const { institution, loadReal, loading: isLoading } = useHoldingsStore();
   const { accession } = useParams();
   const [activeTab, setActiveTab] = useState<TabKey>("all");
+
+  // Auto-load default institution if navigated directly with empty store
+  useEffect(() => {
+    if (!institution && !isLoading) {
+      loadReal("0001067983");
+    }
+  }, [institution, isLoading, loadReal]);
+
   const holdings = institution?.holdings ?? [];
 
   const categorizedHoldings = useMemo<CategorizedHolding[]>(() => {
@@ -64,9 +72,16 @@ export default function Filing() {
 
   if (!institution) {
     return (
-      <div className="card error-card">
-        <strong>No filing loaded — go to Dashboard first</strong>
-        <span>Load an institution to view its latest 13F filing details.</span>
+      <div className="card error-card" style={{ textAlign: "center", padding: "3rem" }}>
+        <span style={{ fontSize: "1.5rem" }}>⏳</span>
+        <strong style={{ display: "block", marginTop: "0.5rem" }}>
+          {isLoading ? "Loading filing data…" : "No filing loaded — go to Dashboard first"}
+        </strong>
+        {!isLoading && (
+          <Link to="/" style={{ marginTop: "0.75rem", display: "inline-block", color: "var(--color-accent)" }}>
+            ← Back to Dashboard
+          </Link>
+        )}
       </div>
     );
   }
