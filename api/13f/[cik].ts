@@ -106,11 +106,11 @@ function buildHoldings(entries: InfoTableEntry[], prev = new Map<string, number>
       name: e.nameOfIssuer,
       ticker: "",
       shares: e.sshPrnamt,
-      value: e.value * 1000,
+      value: e.value,
       weight: totalValue > 0 ? (e.value / totalValue) * 100 : 0,
       changeShares: e.sshPrnamt - (prev.get(e.cusip) ?? 0),
     })),
-    totalValue: totalValue * 1000,
+    totalValue,
   };
 }
 
