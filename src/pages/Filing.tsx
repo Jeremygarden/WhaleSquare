@@ -182,7 +182,7 @@ export default function Filing() {
                   const previousShares = holding.shares - holding.changeShares;
                   const changePercent =
                     previousShares > 0
-                      ? formatPercent(holding.changeShares / previousShares)
+                      ? formatPercent((holding.changeShares / previousShares) * 100)
                       : "—";
                   const tint =
                     holding.category === "new"

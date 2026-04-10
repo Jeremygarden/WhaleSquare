@@ -51,10 +51,15 @@ export default function Dashboard() {
     if (!institution) return;
     const others = INSTITUTIONS.filter((i) => i.cik !== selectedCik);
     // Stagger prefetch to avoid hammering SEC
-    others.forEach((inst, idx) => {
-      setTimeout(() => { loadReal(inst.cik).catch(() => {}); }, (idx + 1) * 1500);
-    });
-    // Only run once after first institution loads
+    const timers = others.map((inst, idx) =>
+      setTimeout(() => {
+        loadReal(inst.cik).catch((err) => {
+          console.warn(`[prefetch] Failed to preload ${inst.name}:`, err);
+        });
+      }, (idx + 1) * 1500)
+    );
+    return () => timers.forEach(clearTimeout);
+    // Run once after first real institution loads; selectedCik intentionally excluded
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [!!institution]);
 

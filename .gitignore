@@ -26,3 +26,7 @@ dist-ssr
 
 design-preview.html
 Express_with_serverless_Vercel_interview.md
+*interview*.md
+.env
+.env.*
+.env.local

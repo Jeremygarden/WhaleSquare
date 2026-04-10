@@ -88,23 +88,28 @@ export const useHoldingsStore = create<State>((set, get) => ({
     // Serve from cache immediately (no loading flash) if still valid
     if (isCacheValid(cik) && institutionCache.has(cik)) {
       const cached = institutionCache.get(cik)!;
-      set({ selectedCik: cik, loading: false, ...applyInstitution(cached, get().selectedQuarter) });
+      set({ selectedCik: cik, loading: false, ...applyInstitution(cached) });
       return cached;
     }
 
     set({ loading: true, selectedCik: cik });
+    // Track which request is current to prevent stale overwrites
+    const requestCik = cik;
     try {
-      const selectedQuarter = get().selectedQuarter || undefined;
-      const institution = await fetchInstitution(cik, selectedQuarter);
+      // Do NOT pass selectedQuarter when switching institutions — it may not exist for the new one
+      const institution = await fetchInstitution(cik);
+
+      // Bail out if a newer request has already taken over
+      if (get().selectedCik !== requestCik) return institution;
 
       // Store in cache
       institutionCache.set(cik, institution);
       cacheTimestamps.set(cik, Date.now());
 
-      set({ loading: false, ...applyInstitution(institution, selectedQuarter) });
+      set({ loading: false, ...applyInstitution(institution) });
       return institution;
     } catch (error) {
-      set({ loading: false });
+      if (get().selectedCik === requestCik) set({ loading: false });
       throw error;
     }
   },

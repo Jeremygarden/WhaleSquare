@@ -27,9 +27,10 @@ const SEC_WWW = "https://www.sec.gov";
 const UA = "WhaleSquare contact@example.com";
 
 function validateCik(cik: string): string {
-  const clean = cik.replace(/\D/g, "").padStart(10, "0");
-  if (!/^\d{10}$/.test(clean)) throw new Error(`Invalid CIK: ${cik}`);
-  return clean;
+  if (!cik || typeof cik !== "string") throw new Error(`Invalid CIK: ${cik}`);
+  const clean = cik.replace(/\D/g, "");
+  if (!clean || clean.length > 10) throw new Error(`Invalid CIK: ${cik}`);
+  return clean.padStart(10, "0");
 }
 
 function formatQuarter(dateString: string): string {
@@ -47,17 +48,16 @@ function getTagValue(block: string, tag: string): string {
 
 function parseInfoTables(xml: string): InfoTableEntry[] {
   const tables: InfoTableEntry[] = [];
-  const re = /<infoTable>([\s\S]*?)<\/infoTable>/gi;
+  const re = /<(?:\w+:)?infoTable>([\s\S]*?)<\/(?:\w+:)?infoTable>/gi;
   let m: RegExpExecArray | null;
   while ((m = re.exec(xml))) {
-    // handle nested <shrsOrPrnAmt><sshPrnamt>...</sshPrnamt></shrsOrPrnAmt>
-    const sshPrnamt =
-      Number(getTagValue(m[1], "sshPrnamt")) ||
-      Number(getTagValue(m[1], "sshprnamttype") ? "0" : getTagValue(m[1], "sshPrnamt")) ||
-      0;
+    // sshPrnamt can be nested inside <shrsOrPrnAmt> or at top level
+    const sshPrnamt = Number(getTagValue(m[1], "sshPrnamt")) || 0;
+    const cusip = getTagValue(m[1], "cusip").trim();
+    if (!cusip) continue; // skip rows with missing CUSIP to avoid dedup pollution
     tables.push({
       nameOfIssuer: getTagValue(m[1], "nameOfIssuer"),
-      cusip: getTagValue(m[1], "cusip"),
+      cusip,
       value: Number(getTagValue(m[1], "value")) || 0,
       sshPrnamt,
     });

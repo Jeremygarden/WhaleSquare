@@ -16,4 +16,4 @@ app.get("/api/13f/:cik", async (req, res) => {
   }
 });
 
-app.listen(5174, () => console.log("EDGAR proxy on :5174"));
+app.listen(5174, () => process.stdout.write("EDGAR proxy running on :5174\n"));
